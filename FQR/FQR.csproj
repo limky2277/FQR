@@ -91,6 +91,9 @@
     </Compile>
     <Compile Include="Models\WebhookModel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Services\JiraCaseMgmtService.cs" />
+    <Compile Include="Services\RegistrationService.cs" />
+    <Compile Include="Utils\DialogAgent.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -104,6 +107,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
+    <Folder Include="DataAccess\" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>

@@ -22,13 +22,18 @@ namespace FQR.Controllers
     #endregion
     public class QuickReplyController : ApiController
     {
-        string pageToken = "";
-        string appSecret = "";
+        #region Token & Secret
+        string pageToken2 = "EAADcf5Tn8Q0BAMbRKkHTbd2rYyEo9UCUYk5M9o5njyZAYssyZBRvwvGwRZAIhlkBX41MM820s1S8avrpeKcx1vr2iNKHx2WzTZAfQFmuw9kF6ZA2WIdBdkpG6wUsGYZBlmut1kAphCZCs9QdZATwa7GAGwW6qQehh4RPsY74D8PMQPiEZBwue0oabelN7wvItOQ0ZD";
+        string pageToken = "EAADcf5Tn8Q0BAGHSAzsOjfVLngSfX7sog5fQWLZBYr2Alze2vYoMZBVAXZCCodsJwCwkM69VOXffIZADMc3GP8vkqXfmtkVtulvd5tYv8EMLNmCUE0QG3no3MbbwhDOj4wEfZAoIitYVQLAkTUyf0asFnDZAV8veNmoTjwjhAT8U7P69aO3ZB3WZBuvxWOmOHigZD";
+        string appSecret = "d331bf5e198b86ab8101ec0f4d9b972f";
+        string verifyToken = "a1234b3214!";
+        #endregion
 
+        #region Verify Token / Secret
         public HttpResponseMessage Get()
         {
             var querystrings = Request.GetQueryNameValuePairs().ToDictionary(x => x.Key, x => x.Value);
-            if (querystrings["hub.verify_token"] == "facebookverifytokenhere")
+            if (querystrings["hub.verify_token"] == verifyToken)
             {
                 return new HttpResponseMessage(HttpStatusCode.OK)
                 {
@@ -37,6 +42,7 @@ namespace FQR.Controllers
             }
             return new HttpResponseMessage(HttpStatusCode.Unauthorized);
         }
+        #endregion
 
         [HttpPost]
         public async Task<HttpResponseMessage> Post()
@@ -50,17 +56,29 @@ namespace FQR.Controllers
             if (value._object != "page")
                 return new HttpResponseMessage(HttpStatusCode.OK);
 
+            //read user name here.
+            using (HttpClient client = new HttpClient())
+            {
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                var a = value.entry.First().messaging.First().sender.id;
+                                
+                HttpResponseMessage ress = await client.GetAsync($"https://graph.facebook.com/{a}?fields=first_name,last_name&access_token={pageToken}");
+                //ress.Content.ReadAsStringAsync().Result;
+            }
+
             foreach (var item in value.entry[0].messaging)
             {
-                if (item.message == null && item.postback == null)
-                    continue;
+                if (item.message == null && item.postback == null) { continue; }
                 else
+                {
                     await SendMessage(GetMessageTemplate(item.message.text, item.sender.id));
+                }
             }
 
             return new HttpResponseMessage(HttpStatusCode.OK);
         }
 
+        #region Verify Signature
         private bool VerifySignature(string signature, string body)
         {
             var hashString = new StringBuilder();
@@ -73,7 +91,25 @@ namespace FQR.Controllers
 
             return hashString.ToString().ToLower() == signature.ToLower();
         }
+        #endregion
 
+        #region Send Message (With QR buttons)
+        /// <summary>
+        /// send message
+        /// </summary>
+        /// <param name="json">json</param>
+        private async Task SendMessage(JObject json)
+        {
+            using (HttpClient client = new HttpClient())
+            {
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                HttpResponseMessage res = await client.PostAsync($"https://graph.facebook.com/v2.6/me/messages?access_token={pageToken}", new StringContent(json.ToString(), Encoding.UTF8, "application/json"));
+            }
+        }
+        #endregion
+
+
+        #region Prepare Quick Reply Buttons
         /// <summary>
         /// get text message template
         /// </summary>
@@ -94,23 +130,10 @@ namespace FQR.Controllers
             return JObject.FromObject(new
             {
                 recipient = new { id = sender },
-                message = new { text = text, quick_replies = quickReplyOption }
+                message = new { text = $"Your have choosen {text}", quick_replies = quickReplyOption }
             });
         }
+        #endregion
 
-        /// <summary>
-        /// send message
-        /// </summary>
-        /// <param name="json">json</param>
-        private async Task SendMessage(JObject json)
-        {
-            // {{ "recipient": { "id": "" }, "message": { "text": "Test" } }}
-            // {{ "recipient": { "id": "" }, "message": { "text": "Test", "quick_replies": [ { "content_type": "text", "title": "Test A", "payload": null }, { "content_type": "text", "title": "Test B", "payload": null }, { "content_type": "text", "title": "Test C", "payload": null } ] } }}
-            using (HttpClient client = new HttpClient())
-            {
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                HttpResponseMessage res = await client.PostAsync($"https://graph.facebook.com/v2.6/me/messages?access_token={pageToken}", new StringContent(json.ToString(), Encoding.UTF8, "application/json"));
-            }
-        }
     }
 }

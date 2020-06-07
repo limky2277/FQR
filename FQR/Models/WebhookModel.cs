@@ -49,6 +49,7 @@ namespace FQR.Models
         public string mid { get; set; }
         public int seq { get; set; }
         public string text { get; set; }
+        public QuickReply quick_reply { get; set; }
     }
 
     public class QuickReplyOption
@@ -59,5 +60,10 @@ namespace FQR.Models
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public string image_url { get; set; } = null;
+    }
+
+    public class QuickReply
+    {
+        public string payload { get; set; }
     }
 }
