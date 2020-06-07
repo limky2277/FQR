@@ -6,7 +6,7 @@ namespace TicketBOT.Services.Interfaces
 {
     public interface IFbApiClientService
     {
-        Task<SenderInfo> GetUserInfoAsync(string pageToken, WebhookModel webhookModel);
+        Task<SenderInfo> GetUserInfoAsync(string pageToken, string senderId);
         Task PostMessageAsync(string pageToken, JObject json);
     }
 }

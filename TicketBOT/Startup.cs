@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
+using TicketBOT.Models;
 using TicketBOT.Services.FacebookServices;
 using TicketBOT.Services.Interfaces;
 using TicketBOT.Services.JiraServices;
@@ -29,13 +31,21 @@ namespace TicketBOT
             services.AddScoped<IUserRegistrationService, JiraUserRegistrationService>();
 
             // Register HttpClient
-            string fbApiBaseUrl = "https://graph.facebook.com/";
-
             services.AddHttpClient<IFbApiClientService, FbApiClientService>(client =>
                 {
-                    // client.BaseAddress = new Uri(fbApiBaseUrl);
                     client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
                 });
+
+            // Register Database
+            //services.Configure<TicketBOTDatabaseConfig>(Configuration.GetSection(nameof(TicketBOTDatabaseConfig)));
+            //services.AddSingleton<ITicketBOTDatabaseConfig>(sp =>sp.GetRequiredService<IOptions<TicketBOTDatabaseConfig>>().Value);
+
+            services.AddSingleton<CompanyService>();
+
+            // Register AppSettings
+            ApplicationSettings applicationSettings = new ApplicationSettings();
+            Configuration.GetSection(nameof(ApplicationSettings)).Bind(applicationSettings);
+            services.AddSingleton<ApplicationSettings>(applicationSettings);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

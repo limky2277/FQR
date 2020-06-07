@@ -14,6 +14,12 @@ What things you need to install the software and how to install them
 Give examples
 ```
 
+### Dependencies
+* Microsoft.AspNetCore.App - The web framework used
+* Microsoft.NETCore.App - The web framework used
+* [MongoDB.Driver - 2.10.4](http://www.mongodb.org/display/DOCS/CSharp+Language+Center/) - The database used
+* [Newtonsoft.Json - 12.0.3](https://www.newtonsoft.com/json/) 
+
 ### Installing
 
 A step by step series of examples that tell you how to get a development env running
@@ -65,6 +71,23 @@ Add additional notes about how to deploy this on a live system
 ## Contributing
 
 Please read [CONTRIBUTING.md](https://gist.github.com/PurpleBooth/b24679402957c63ec426) for details on our code of conduct, and the process for submitting pull requests to us.
+
+## Changelog
+### [1.1.0.0] - 2020-06-07
+- Added
+```
+- Setup database
+```
+- Changed
+- Fixed
+
+### [1.0.0.0] - 2020-06-07
+- Added
+```
+Init project
+```
+- Changed
+- Fixed
 
 ## Versioning
 

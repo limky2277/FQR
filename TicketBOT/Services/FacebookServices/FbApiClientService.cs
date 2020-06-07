@@ -19,10 +19,8 @@ namespace TicketBOT.Services.FacebookServices
             _client = client;
         }
 
-        public async Task<SenderInfo> GetUserInfoAsync(string pageToken, WebhookModel webhookModel)
-        {
-            string senderId = webhookModel.entry.First().messaging.First().sender.id;
-            
+        public async Task<SenderInfo> GetUserInfoAsync(string pageToken, string senderId)
+        {            
             var resp = await _client.GetAsync($"https://graph.facebook.com/{senderId}?fields=first_name,last_name&access_token={pageToken}");
             if (resp.StatusCode == HttpStatusCode.OK)
             {

@@ -9,6 +9,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using TicketBOT.Models;
 using TicketBOT.Services.Interfaces;
+using TicketBOT.Services.JiraServices;
 
 namespace TicketBOT.Controllers
 {
@@ -16,26 +17,28 @@ namespace TicketBOT.Controllers
     [ApiController]
     public class QuickReplyController : ControllerBase
     {
-        private ICaseMgmtService _caseMgmtService;
-        private IUserRegistrationService _userRegistrationService;
-        private IFbApiClientService _fbApiClientService;
+        private readonly ApplicationSettings _appSettings;
+        private readonly ICaseMgmtService _caseMgmtService;
+        private readonly IUserRegistrationService _userRegistrationService;
+        private readonly IFbApiClientService _fbApiClientService;
+        private readonly CompanyService _companyService;
 
-        string pageToken = "";
-        string verifyToken = "";
-        string appSecret = "x";
-
-        public QuickReplyController(ICaseMgmtService caseMgmtService, IUserRegistrationService userRegistrationService, IFbApiClientService fbApiClientService)
+        public QuickReplyController(ApplicationSettings appSettings, ICaseMgmtService caseMgmtService,
+            IUserRegistrationService userRegistrationService,
+            IFbApiClientService fbApiClientService, CompanyService companyService)
         {
+            _appSettings = appSettings;
             _caseMgmtService = caseMgmtService;
             _userRegistrationService = userRegistrationService;
             _fbApiClientService = fbApiClientService;
+            _companyService = companyService;
         }
 
         #region GET --> Verify Token / Secret
         // To be called when adding Webhooks to Facebook App
         public IActionResult Get()
         {
-            if (Request.Query["hub.verify_token"] == verifyToken)
+            if (Request.Query["hub.verify_token"] == _appSettings.FacebookApp.CallbackVefifyToken)
             {
                 return Ok(Request.Query["hub.challenge"].ToString());
             }
@@ -57,18 +60,30 @@ namespace TicketBOT.Controllers
             if (value._object != "page")
                 return Ok();
 
-            // To-do: retrieve pageToken from database based on Page ID
-            
-
-            //read user name here. Return null if user not found
-            var userInfo = await _fbApiClientService.GetUserInfoAsync(pageToken, value);
-
-            foreach (var item in value.entry[0].messaging)
+            foreach (var entry in value.entry)
             {
-                if (item.message == null && item.postback == null) { continue; }
+                // To-do: retrieve pageToken from database based on Page ID
+                var incomingPageId = entry.id;
+                var company = _companyService.Get(incomingPageId);
+
+                // If company registered in db
+                if (company != null)
+                {
+                    foreach (var msgItem in entry.messaging)
+                    {
+                        if (msgItem.message == null && msgItem.postback == null) { continue; }
+                        else
+                        {
+                            //read user name here. Return null if user not found
+                            var userInfo = await _fbApiClientService.GetUserInfoAsync(company.FbPageToken, msgItem.sender.id);
+
+                            await _fbApiClientService.PostMessageAsync(company.FbPageToken, GetMessageTemplate(msgItem.message.text, msgItem.sender.id));
+                        }
+                    }
+                }
                 else
                 {
-                    await _fbApiClientService.PostMessageAsync(pageToken, GetMessageTemplate(item.message.text, item.sender.id));
+                    // To-do: Company not registered in db
                 }
             }
 
@@ -80,7 +95,7 @@ namespace TicketBOT.Controllers
         private bool VerifySignature(string signature, string body)
         {
             var hashString = new StringBuilder();
-            using (var crypto = new HMACSHA1(Encoding.UTF8.GetBytes(appSecret)))
+            using (var crypto = new HMACSHA1(Encoding.UTF8.GetBytes(_appSettings.FacebookApp.AppSecret)))
             {
                 var hash = crypto.ComputeHash(Encoding.UTF8.GetBytes(body));
                 foreach (var item in hash)
