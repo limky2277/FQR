@@ -25,8 +25,6 @@ namespace TicketBOT.Controllers
 
         public IActionResult Get()
         {
-            _companyService.Create(new Company { Id = Guid.NewGuid(), CompanyName = "ABC Company", FbPageId = "103650171367830", FbPageToken = "EAAJHOBuXMzYBAPpVpakroPUU8YE8w6ZC57iya27Dd769N4sWjIbvQSatPnIv4NCO4MWdUqbXiBjp5y4hNwqV2W3Jfi2XyqsylkSQqw5vbDipkEUZCPMnEvcUNXL3xM7dfW4DCLOHnBMEwOZC7vpWGcriKrLROVp7JNRhUarP84VlphtKO2Edar3BhuFopsZD" });
-
             return Ok(_companyService.Get());
         }
     }
