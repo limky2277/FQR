@@ -23,9 +23,9 @@ namespace FQR.Controllers
     public class QuickReplyController : ApiController
     {
         #region Token & Secret
-        string pageToken2 = "EAADcf5Tn8Q0BAMbRKkHTbd2rYyEo9UCUYk5M9o5njyZAYssyZBRvwvGwRZAIhlkBX41MM820s1S8avrpeKcx1vr2iNKHx2WzTZAfQFmuw9kF6ZA2WIdBdkpG6wUsGYZBlmut1kAphCZCs9QdZATwa7GAGwW6qQehh4RPsY74D8PMQPiEZBwue0oabelN7wvItOQ0ZD";
-        string pageToken = "EAADcf5Tn8Q0BAGHSAzsOjfVLngSfX7sog5fQWLZBYr2Alze2vYoMZBVAXZCCodsJwCwkM69VOXffIZADMc3GP8vkqXfmtkVtulvd5tYv8EMLNmCUE0QG3no3MbbwhDOj4wEfZAoIitYVQLAkTUyf0asFnDZAV8veNmoTjwjhAT8U7P69aO3ZB3WZBuvxWOmOHigZD";
-        string appSecret = "d331bf5e198b86ab8101ec0f4d9b972f";
+        string pageToken = "EAAJHOBuXMzYBAL6UFTFdUMVr9n1qVlYT5x1g1GFMTJ4TOXshS367xj1yZA80T6dZBq9J3cxWoYDZBD3er1PXuSQAfy2trkHCUcvhJxs7w5sQbKxia5fA0wjkGr04WePRiel828uBVAAtrS8AoesZCRGVI9clLQQ6BZCG8feQzHGwYgjeviPABcG1nredccgEZD";
+        string pageToken2 = "EAADcf5Tn8Q0BAGHSAzsOjfVLngSfX7sog5fQWLZBYr2Alze2vYoMZBVAXZCCodsJwCwkM69VOXffIZADMc3GP8vkqXfmtkVtulvd5tYv8EMLNmCUE0QG3no3MbbwhDOj4wEfZAoIitYVQLAkTUyf0asFnDZAV8veNmoTjwjhAT8U7P69aO3ZB3WZBuvxWOmOHigZD";
+        string appSecret = "a722e1d7a9a474d27cb290bad5b0ec71";
         string verifyToken = "a1234b3214!";
         #endregion
 
@@ -60,7 +60,8 @@ namespace FQR.Controllers
             using (HttpClient client = new HttpClient())
             {
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                var a = value.entry.First().messaging.First().sender.id;
+                //var a = value.entry.First().messaging.First().sender.id;
+                var a = "abc123";
                                 
                 HttpResponseMessage ress = await client.GetAsync($"https://graph.facebook.com/{a}?fields=first_name,last_name&access_token={pageToken}");
                 //ress.Content.ReadAsStringAsync().Result;
