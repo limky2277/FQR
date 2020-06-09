@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Options;
+using TicketBOT.BotAgent;
 using TicketBOT.Models;
 using TicketBOT.Services.FacebookServices;
 using TicketBOT.Services.Interfaces;
@@ -28,24 +28,22 @@ namespace TicketBOT
 
             // Register DI
             services.AddScoped<ICaseMgmtService, JiraCaseMgmtService>();
-            services.AddScoped<IUserRegistrationService, JiraUserRegistrationService>();
+            services.AddSingleton<JiraUserMgmtService>();
+            services.AddSingleton<CompanyService>();
+            services.AddSingleton<ClientCompanyService>();
+            services.AddSingleton<ConversationService>();
+            services.AddScoped<Bot>();
+
+            // Register AppSettings
+            ApplicationSettings applicationSettings = new ApplicationSettings();
+            Configuration.GetSection(nameof(ApplicationSettings)).Bind(applicationSettings);
+            services.AddSingleton<ApplicationSettings>(applicationSettings);
 
             // Register HttpClient
             services.AddHttpClient<IFbApiClientService, FbApiClientService>(client =>
                 {
                     client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
                 });
-
-            // Register Database
-            //services.Configure<TicketBOTDatabaseConfig>(Configuration.GetSection(nameof(TicketBOTDatabaseConfig)));
-            //services.AddSingleton<ITicketBOTDatabaseConfig>(sp =>sp.GetRequiredService<IOptions<TicketBOTDatabaseConfig>>().Value);
-
-            services.AddSingleton<CompanyService>();
-
-            // Register AppSettings
-            ApplicationSettings applicationSettings = new ApplicationSettings();
-            Configuration.GetSection(nameof(ApplicationSettings)).Bind(applicationSettings);
-            services.AddSingleton<ApplicationSettings>(applicationSettings);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

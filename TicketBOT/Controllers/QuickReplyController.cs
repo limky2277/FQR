@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using TicketBOT.BotAgent;
 using TicketBOT.Models;
 using TicketBOT.Services.Interfaces;
 using TicketBOT.Services.JiraServices;
@@ -19,19 +20,21 @@ namespace TicketBOT.Controllers
     {
         private readonly ApplicationSettings _appSettings;
         private readonly ICaseMgmtService _caseMgmtService;
-        private readonly IUserRegistrationService _userRegistrationService;
         private readonly IFbApiClientService _fbApiClientService;
+        private readonly JiraUserMgmtService _jiraUserMgmtService;
         private readonly CompanyService _companyService;
+        private readonly Bot _bot;
 
         public QuickReplyController(ApplicationSettings appSettings, ICaseMgmtService caseMgmtService,
-            IUserRegistrationService userRegistrationService,
-            IFbApiClientService fbApiClientService, CompanyService companyService)
+            JiraUserMgmtService jiraUserMgmtService,
+            IFbApiClientService fbApiClientService, CompanyService companyService, Bot bot)
         {
             _appSettings = appSettings;
             _caseMgmtService = caseMgmtService;
-            _userRegistrationService = userRegistrationService;
+            _jiraUserMgmtService = jiraUserMgmtService;
             _fbApiClientService = fbApiClientService;
             _companyService = companyService;
+            _bot = bot;
         }
 
         #region GET --> Verify Token / Secret
@@ -76,6 +79,9 @@ namespace TicketBOT.Controllers
                         {
                             //read user name here. Return null if user not found
                             var userInfo = await _fbApiClientService.GetUserInfoAsync(company.FbPageToken, msgItem.sender.id);
+
+                            // Dispatch bot agent
+                            var result = _bot.DispatchAgent(userInfo, company);
 
                             await _fbApiClientService.PostMessageAsync(company.FbPageToken, GetMessageTemplate(msgItem.message.text, msgItem.sender.id));
                         }
