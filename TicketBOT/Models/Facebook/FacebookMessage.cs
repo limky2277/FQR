@@ -1,12 +1,9 @@
 ﻿using Newtonsoft.Json;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Web;
 
-namespace TicketBOT.Models
+namespace TicketBOT.Models.Facebook
 {
-    public class WebhookModel
+    public class FacebookMessage
     {
         [JsonProperty("object")]
         public string _object { get; set; }
@@ -52,25 +49,8 @@ namespace TicketBOT.Models
         public QuickReply quick_reply { get; set; }
     }
 
-    public class QuickReplyOption
-    {
-        public string content_type { get; set; } = "text";
-        public string title { get; set; }
-        public string payload { get; set; }
-
-        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-        public string image_url { get; set; } = null;
-    }
-
     public class QuickReply
     {
         public string payload { get; set; }
-    }
-
-    public class SenderInfo
-    {
-        public string id { get; set; }
-        public string first_name { get; set; }
-        public string last_name { get; set; }
     }
 }

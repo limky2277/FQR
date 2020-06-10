@@ -9,6 +9,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using TicketBOT.BotAgent;
 using TicketBOT.Models;
+using TicketBOT.Models.Facebook;
 using TicketBOT.Services.Interfaces;
 using TicketBOT.Services.JiraServices;
 
@@ -59,7 +60,7 @@ namespace TicketBOT.Controllers
             if (!VerifySignature(signature, body))
                 return BadRequest();
 
-            var value = JsonConvert.DeserializeObject<WebhookModel>(body);
+            var value = JsonConvert.DeserializeObject<FacebookMessage>(body);
             if (value._object != "page")
                 return Ok();
 
@@ -77,13 +78,8 @@ namespace TicketBOT.Controllers
                         if (msgItem.message == null && msgItem.postback == null) { continue; }
                         else
                         {
-                            //read user name here. Return null if user not found
-                            var userInfo = await _fbApiClientService.GetUserInfoAsync(company.FbPageToken, msgItem.sender.id);
-
                             // Dispatch bot agent
-                            var result = _bot.DispatchAgent(userInfo, company);
-
-                            await _fbApiClientService.PostMessageAsync(company.FbPageToken, GetMessageTemplate(msgItem.message.text, msgItem.sender.id));
+                            await _bot.DispatchAgent(msgItem, company);
                         }
                     }
                 }
@@ -109,32 +105,6 @@ namespace TicketBOT.Controllers
             }
 
             return hashString.ToString().ToLower() == signature.ToLower();
-        }
-        #endregion
-
-        #region Prepare Quick Reply Buttons
-        /// <summary>
-        /// get text message template
-        /// </summary>
-        /// <param name="text">text</param>
-        /// <param name="sender">sender id</param>
-        /// <returns>json</returns>
-        private JObject GetMessageTemplate(string text, string sender)
-        {
-            // Quick reply 
-            var quickReplyOption = new List<QuickReplyOption>
-            {
-                new QuickReplyOption { title = "Test A", payload = "Test A Payload" },
-                new QuickReplyOption { title = "Test B", payload = "Test B Payload" },
-                new QuickReplyOption { title = "Test C", payload = "Test C Payload" },
-            };
-
-
-            return JObject.FromObject(new
-            {
-                recipient = new { id = sender },
-                message = new { text = $"Your have choosen {text}", quick_replies = quickReplyOption }
-            });
         }
         #endregion
     }

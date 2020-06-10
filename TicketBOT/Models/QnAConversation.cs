@@ -15,6 +15,13 @@ namespace TicketBOT.Models
             TicketCode,
         }
 
+        public enum ConstructType
+        {
+            None,
+            Greeting,
+            Ending,
+        }
+
         [BsonId]
         public Guid Id { get; set; } = Guid.NewGuid();
         public Guid CompanyId { get; set; }

@@ -19,6 +19,8 @@ Give examples
 * Microsoft.NETCore.App - The web framework used
 * [MongoDB.Driver - 2.10.4](http://www.mongodb.org/display/DOCS/CSharp+Language+Center/) - The database used
 * [Newtonsoft.Json - 12.0.3](https://www.newtonsoft.com/json/) 
+* [Microsoft.Extensions.Caching.Redis - 2.2.0](https://asp.net/) 
+* [EasyCaching.Redis - 0.8.9](https://github.com/dotnetcore/EasyCaching) 
 
 ### Installing
 
