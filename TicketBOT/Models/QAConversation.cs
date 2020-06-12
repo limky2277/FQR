@@ -14,19 +14,22 @@ namespace TicketBOT.Models
             Company,
             Issue,
             TicketCode,
+            VerificationCode,
         }
 
         public enum ConstructType
         {
             None,
             Greeting,
+            SearchCompany,
+            RequestVerificationCode,
             CreateTicket,
             TicketCreated,
-            SearchCompany,
             CheckTicket,
             TicketFound,
             Ending,
             NotImplemented,
+            Error,
         }
 
         [BsonId]

@@ -233,7 +233,7 @@ namespace TicketBOT.BotAgent
                         List<QAConversation> qaConv = _senderCacheService.GetConversationList($"{_senderInfo.senderConversationId}~{_company.FbPageId}");
                         if (qaConv != null)
                         {
-                            QAConversation verifyConv = qaConv.Where(x=>x.LastQuestionAsked == (int)Question.Company).FirstOrDefault();
+                            QAConversation verifyConv = qaConv.Where(x => x.LastQuestionAsked == (int)Question.Company).FirstOrDefault();
 
                             // Check verification code
                             var clientList = _clientService.Get();
