@@ -56,15 +56,15 @@ namespace TicketBOT.Controllers
 
             //_senderCacheService.UpsertActiveConversation("3058942664196267", new QAConversation { FbSenderId = "3058942664196267", LastQuestionAsked = (int)Question.Issue, AnswerFreeText= "issue", Answered = true });
 
-            var redisResult = _senderCacheService.GetConversationList("");
+            var redisResult = _senderCacheService.GetConversationList("3058942664196267~103650171367830");
 
-            var companyResult = _companyService.Create(new Company { CompanyName = "ABC Company", FbPageId = "", FbPageToken = "" });
+            var companyResult = _companyService.Create(new Company { CompanyName = "ABC Company", FbPageId = "103650171367830", FbPageToken = "EAAJHOBuXMzYBAPpVpakroPUU8YE8w6ZC57iya27Dd769N4sWjIbvQSatPnIv4NCO4MWdUqbXiBjp5y4hNwqV2W3Jfi2XyqsylkSQqw5vbDipkEUZCPMnEvcUNXL3xM7dfW4DCLOHnBMEwOZC7vpWGcriKrLROVp7JNRhUarP84VlphtKO2Edar3BhuFopsZD" });
 
             if (companyResult != null)
             {
                 var clientCompanyResult = _clientCompanyService.Create(new ClientCompany { ClientCompanyName = "XYZ Client", VerificationEmail = "abc@xyz.com", VerificationCode = "123456" });
-                _conversationService.Create(new QAConversation { CompanyId = Guid.NewGuid(), FbSenderId = "ABC", LastQuestionAsked = (int)QAConversation.Question.None });
-                _jiraUserMgmtService.Create(new JiraUser { UserFbId = "", CompanyId = companyResult.Id, ClientCompanyId = clientCompanyResult.Id, UserNickname = "abc nickname" });
+                _conversationService.Create(new QAConversation { LastQuestionAsked = (int)QAConversation.Question.None });
+                _jiraUserMgmtService.Create(new JiraUser { UserFbId = "3058942664196267", CompanyId = companyResult.Id, ClientCompanyId = clientCompanyResult.Id, UserNickname = "abc nickname" });
             }
 
             //return Ok(_jiraUserMgmtService.Get());
