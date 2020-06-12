@@ -10,7 +10,7 @@ using TicketBOT.Models.Facebook;
 using TicketBOT.Services.Interfaces;
 using TicketBOT.Services.JiraServices;
 using static TicketBOT.Models.Facebook.FacebookQuickReply;
-using static TicketBOT.Models.QnAConversation;
+using static TicketBOT.Models.QAConversation;
 
 namespace TicketBOT.BotAgent
 {
@@ -42,7 +42,7 @@ namespace TicketBOT.BotAgent
             _senderCacheService = senderCacheService;
         }
 
-        public async Task<bool> DispatchAgent(Messaging incomingMessage, Company company)
+        public async Task DispatchAgent(Messaging incomingMessage, Company company)
         {
             //read user name here. Return null if user not found
             _senderInfo = await _fbApiClientService.GetUserInfoAsync(company.FbPageToken, incomingMessage.sender.id);
@@ -53,7 +53,7 @@ namespace TicketBOT.BotAgent
             // INIT.1.1 Check any active conversation (Past x mins) To break the conversation loop
 
             // If no active conversation, send greeting
-            if (!_senderCacheService.AnyActiveConversation(_senderInfo.senderConversationId))
+            if (!_senderCacheService.AnyActiveConversation($"{_senderInfo.senderConversationId}~{company.FbPageId}"))
             {
                 // A.1.0
                 // Send greeting first
@@ -62,63 +62,83 @@ namespace TicketBOT.BotAgent
             }
             else
             {
-                // Check Payload
-                // Is there quick reply buttons associated
-                // If quick reply button associated: To-do
-                var anyQuickReply = await CheckQuickReplyPayload(incomingMessage);
+                // If no quick reply button associated 
+                // Check db for previous conversation SELECT TOP 1 * FROM Conversation WHERE CompanyId = X AND FbSenderId = X AND ModifiedOn DESC
+                // If record found --> extract Conversation.Answered
+                // var lastQuestion = _conversationService.GetLastQuestion(_company.Id, _senderInfo.id);
+                var lastQuestion = _senderCacheService.LastConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}");
 
-                if (anyQuickReply)
+                if (lastQuestion != null)
                 {
-                    // If no quick reply button associated 
-                    // Check db for previous conversation SELECT TOP 1 * FROM Conversation WHERE CompanyId = X AND FbSenderId = X AND ModifiedOn DESC
-                    // If record found --> extract Conversation.Answered
-                    var lastQuestion = _conversationService.GetLastQuestion(_company.Id, _senderInfo.id);
-                    if (lastQuestion != null)
+                    if (!lastQuestion.Answered)
                     {
-                        if (!lastQuestion.Answered)
+                        // If answer not fullfilled, ask/ask again
+                        // Extract Conversation.LastQuestionAsked
+                        // extract message from payload. Validate input
+                        await ValidateQnA(lastQuestion, incomingMessage.message.text);
+                    }
+                    else
+                    {
+                        // If answer fullfilled, prepare next question
+
+                        // Check Payload
+                        // Is there quick reply buttons associated
+                        // If quick reply button associated: To-do
+                        var anyQuickReply = CheckQuickReplyPayload(incomingMessage);
+                        if (!string.IsNullOrEmpty(anyQuickReply))
                         {
-                            // If answer not fullfilled, ask/ask again
-                            // Extract Conversation.LastQuestionAsked
-                            // extract message from payload. Validate input
-                            ValidateQnA(lastQuestion, "answer");
+                            // Conversation.LastQuestionAsked, Conversation.AnswerFreeText
+                            switch (anyQuickReply)
+                            {
+                                case RAISE_TICKET:
+                                    await PrepareRaiseTicket();
+                                    break;
+                                case TICKET_STATUS:
+                                    await PrepareCheckTicketStatus();
+                                    break;
+                                default:
+                                    // prompt: Apologize due to not recognize selected option. Send relevant / available option again
+                                    await ConstructAndSendMessage(ConstructType.NotImplemented);
+                                    break;
+                            }
                         }
                         else
                         {
-                            // If answer fullfilled, prepare next question
-
-                            // Conversation.LastQuestionAsked, Conversation.AnswerFreeText
+                            await ConstructAndSendMessage(ConstructType.NotImplemented);
                         }
                     }
                 }
-
+                else
+                {
+                    await ConstructAndSendMessage(ConstructType.Greeting);
+                }
             }
-
-            return false;
         }
 
-        private async Task<bool> CheckQuickReplyPayload(Messaging incomingMessage)
+        private string CheckQuickReplyPayload(Messaging incomingMessage)
         {
-            var payload = "NONE";
+            string payload = null;
             try
             {
                 payload = incomingMessage.message.quick_reply.payload;
             }
             catch { }
 
-            switch (payload)
-            {
-                case RAISE_TICKET:
-                    PrepareRaiseTicket();
-                    return true;
-                case TICKET_STATUS:
-                    return true;
-                default:
-                    await ConstructAndSendMessage(ConstructType.Ending);
-                    return false;
-            }
+            return payload;
+
+            //switch (payload)
+            //{
+            //    case RAISE_TICKET:
+            //        PrepareRaiseTicket();
+            //        return true;
+            //    case TICKET_STATUS:
+            //        return true;
+            //    default:   
+            //        return false;
+            //}
         }
 
-        private void PrepareRaiseTicket()
+        private async Task PrepareRaiseTicket()
         {
             // Check is user registered
             // Extract senderInfo.senderId, company.Id
@@ -132,6 +152,7 @@ namespace TicketBOT.BotAgent
                 // Inform template 
                 // Insert into conversation db ConversationFlow.Question.Ticket
                 // Send question to sender, ask for ticket description
+                await ConstructAndSendMessage(ConstructType.CreateTicket);
             }
             else
             {
@@ -141,44 +162,109 @@ namespace TicketBOT.BotAgent
                 // Request user to register now
                 // Insert into conversation db ConversationFlow.Question.Company
                 // Send question to sender, ask for company
+                await ConstructAndSendMessage(ConstructType.SearchCompany);
             }
         }
 
-        private void ValidateQnA(QnAConversation conversation, string answer)
+        private async Task PrepareCheckTicketStatus()
+        {
+            // Jira integration
+            bool ticketStatus = true;
+            if (ticketStatus)
+            {
+                await ConstructAndSendMessage(ConstructType.CheckTicket);
+            }
+            else
+            {
+                // Ticket not found 
+                // Send apologize message
+
+                // Reset to greeting
+                // await ConstructAndSendMessage(ConstructType.Greeting)
+                await ConstructAndSendMessage(ConstructType.NotImplemented);
+            }
+        }
+
+        private async Task ValidateQnA(QAConversation conversation, string answer)
         {
             switch (conversation.LastQuestionAsked)
             {
                 case (int)Question.Company:
-                    bool isAnswerValid = false; // Validate input from message (answer) 
-                    if (!isAnswerValid)
-                    {
-                        // Invalid input / no company found, please try again
-                    }
-                    else
+                    // Validate message (reported issue) e.g. min length
+                    if (!string.IsNullOrEmpty(answer))
                     {
                         // Search clients databases
-                        var clientList = _companyService.Get();
-                        var clientResult = clientList.Where(x => x.CompanyName == answer).FirstOrDefault();
+                        var clientList = _clientService.Get();
+                        var clientResult = clientList.Where(x => x.ClientCompanyName == answer).FirstOrDefault();
 
                         if (clientResult != null)
                         {
-                            // Update conversation
-                            conversation.Answered = true;
-                            conversation.AnswerFreeText = answer;
-                            conversation.ModifiedOn = DateTime.Now;
-
                             // Register user
                             JiraUser user = new JiraUser { UserFbId = _senderInfo.id, ClientCompanyId = clientResult.Id, CompanyId = _company.Id, UserNickname = $"{_senderInfo.last_name} {_senderInfo.first_name}" };
 
                             _jiraUserMgmtService.Create(user);
 
-                            // Prepare next question (Conversation.Question.Issue) and send to sender
-                            // What is your issue?
+                            await ConstructAndSendMessage(ConstructType.CreateTicket);
                         }
                         else
                         {
                             // Invalid input / no company found, please try again
+                            await ConstructAndSendMessage(ConstructType.NotImplemented);
                         }
+                    }
+                    else
+                    {
+                        await ConstructAndSendMessage(ConstructType.NotImplemented);
+                    }
+                    break;
+                case (int)Question.Issue:
+                    // Validate message (reported issue) e.g. min length
+                    if (!string.IsNullOrEmpty(answer))
+                    {
+                        conversation.Answered = true;
+                        conversation.AnswerFreeText = answer;
+                        conversation.ModifiedOn = DateTime.Now;
+                        _senderCacheService.UpsertActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}", conversation);
+
+                        // Jira integration here
+
+                        // Inform user we have loggeed your case, please quote [case_num].....
+                        await ConstructAndSendMessage(ConstructType.TicketCreated);
+
+                    }
+                    else
+                    {
+                        // Validation failed, please retry
+                        await ConstructAndSendMessage(ConstructType.NotImplemented);
+                    }
+                    break;
+                case (int)Question.TicketCode:
+                    // Validate message (reported issue) e.g. min length
+                    if (!string.IsNullOrEmpty(answer))
+                    {
+                        // Jira integration here
+                        // Search ticket status
+                        bool ticketFound = true;
+                        if (ticketFound)
+                        {
+                            conversation.Answered = true;
+                            conversation.AnswerFreeText = answer;
+                            conversation.ModifiedOn = DateTime.Now;
+                            _senderCacheService.UpsertActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}", conversation);
+
+                            await ConstructAndSendMessage(ConstructType.TicketFound);
+                        }
+                        else
+                        {
+                            // Inform user ticket not found
+                            // Do you want to retry?
+                            await ConstructAndSendMessage(ConstructType.NotImplemented);
+                        }
+                    }
+                    else
+                    {
+                        // Validation failed, please retry
+                        await ConstructAndSendMessage(ConstructType.NotImplemented);
                     }
                     break;
                 default:
@@ -186,7 +272,7 @@ namespace TicketBOT.BotAgent
             }
         }
 
-        #region Prepare Quick Reply Buttons
+        #region Prepare Quick Reply Buttons / Construct Message
         /// <summary>
         /// get text message template
         /// </summary>
@@ -220,7 +306,7 @@ namespace TicketBOT.BotAgent
                         message = new { text = $"How can I help you? Here some option(s).", quick_replies = greetingOption }
                     }));
 
-                    _senderCacheService.UpsertActiveConversation(_senderInfo.senderConversationId, DateTime.Now.ToString());
+                    _senderCacheService.UpsertActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}", new QAConversation { LastQuestionAsked = (int)Question.None, Answered = true });
                     break;
                 case ConstructType.Ending:
                     messageList.Add(JObject.FromObject(new
@@ -229,11 +315,68 @@ namespace TicketBOT.BotAgent
                         message = new { text = $"Thank you! Have a nice day! :)." }
                     }));
 
-                    _senderCacheService.RemoveActiveConversation(_senderInfo.senderConversationId);
+                    _senderCacheService.RemoveActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}");
+                    break;
+                case ConstructType.CreateTicket:
+                    messageList.Add(JObject.FromObject(new
+                    {
+                        recipient = new { id = _senderInfo.senderConversationId },
+                        message = new { text = $"Okay got it! Please tell me about your issue(s)." }
+                    }));
+                    _senderCacheService.UpsertActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}", new QAConversation { LastQuestionAsked = (int)Question.Issue, Answered = false });
+                    break;
+                case ConstructType.TicketCreated:
+                    messageList.Add(JObject.FromObject(new
+                    {
+                        recipient = new { id = _senderInfo.senderConversationId },
+                        message = new { text = $"All done! Your case has been logged. Please quote [case_num] to follow up." }
+                    }));
+                    messageList.Add(JObject.FromObject(new
+                    {
+                        recipient = new { id = _senderInfo.senderConversationId },
+                        message = new { text = $"Thank you for using TicketBOT! Have a nice day! :)." }
+                    }));
+                    _senderCacheService.RemoveActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}");
+                    break;
+                case ConstructType.CheckTicket:
+                    messageList.Add(JObject.FromObject(new
+                    {
+                        recipient = new { id = _senderInfo.senderConversationId },
+                        message = new { text = $"Sure! Please quote your ticket code." }
+                    }));
+                    _senderCacheService.UpsertActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}", new QAConversation { LastQuestionAsked = (int)Question.TicketCode, Answered = false });
+                    break;
+                case ConstructType.TicketFound:
+                    messageList.Add(JObject.FromObject(new
+                    {
+                        recipient = new { id = _senderInfo.senderConversationId },
+                        message = new { text = $"There you go! [ticket_status]" }
+                    }));
+                    messageList.Add(JObject.FromObject(new
+                    {
+                        recipient = new { id = _senderInfo.senderConversationId },
+                        message = new { text = $"Thank you for using TicketBOT! Have a nice day! :)." }
+                    }));
+                    _senderCacheService.RemoveActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}");
+                    break;
+                case ConstructType.SearchCompany:
+                    messageList.Add(JObject.FromObject(new
+                    {
+                        recipient = new { id = _senderInfo.senderConversationId },
+                        message = new { text = $"Before we get started, I wanna know one thing. Can you tell me your company name please?" }
+                    }));
+                    _senderCacheService.UpsertActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}", new QAConversation { LastQuestionAsked = (int)Question.Company, Answered = false });
+                    break;
+                case ConstructType.NotImplemented:
+                    messageList.Add(JObject.FromObject(new
+                    {
+                        recipient = new { id = _senderInfo.senderConversationId },
+                        message = new { text = $"DEBUG --> Not implemented." }
+                    }));
+                    _senderCacheService.RemoveActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}");
                     break;
                 case ConstructType.None:
                     break;
-
             }
 
             foreach (var message in messageList)

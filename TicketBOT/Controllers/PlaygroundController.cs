@@ -1,10 +1,13 @@
 ﻿using EasyCaching.Core;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Redis;
+using Newtonsoft.Json;
 using System;
 using TicketBOT.Models;
 using TicketBOT.Services.Interfaces;
 using TicketBOT.Services.JiraServices;
+using static TicketBOT.Models.QAConversation;
+
 namespace TicketBOT.Controllers
 {
     #region Reference
@@ -26,10 +29,12 @@ namespace TicketBOT.Controllers
         private readonly IEasyCachingProvider _cachingProvider;
         private readonly IEasyCachingProviderFactory _cachingProviderFactory;
 
+        private ISenderCacheService _senderCacheService;
+
         public PlaygroundController(ApplicationSettings appSettings, ICaseMgmtService caseMgmtService, JiraUserMgmtService jiraUserMgmtService,
-            IFbApiClientService fbApiClientService, CompanyService companyService, 
+            IFbApiClientService fbApiClientService, CompanyService companyService,
             ClientCompanyService clientCompanyService, ConversationService conversationService,
-            IEasyCachingProviderFactory cachingProviderFactory)
+            IEasyCachingProviderFactory cachingProviderFactory, ISenderCacheService senderCacheService)
         {
             _appSettings = appSettings;
             _caseMgmtService = caseMgmtService;
@@ -40,6 +45,7 @@ namespace TicketBOT.Controllers
             _conversationService = conversationService;
             _cachingProviderFactory = cachingProviderFactory;
             _cachingProvider = _cachingProviderFactory.GetCachingProvider(_appSettings.RedisSettings.CachingProvider);
+            _senderCacheService = senderCacheService;
         }
 
         public IActionResult Get()
@@ -48,17 +54,21 @@ namespace TicketBOT.Controllers
 
             //var redisResult = _cachingProvider.Get<object>("Key123");
 
+            //_senderCacheService.UpsertActiveConversation("3058942664196267", new QAConversation { FbSenderId = "3058942664196267", LastQuestionAsked = (int)Question.Issue, AnswerFreeText= "issue", Answered = true });
+
+            var redisResult = _senderCacheService.GetConversationList("");
+
             var companyResult = _companyService.Create(new Company { CompanyName = "ABC Company", FbPageId = "", FbPageToken = "" });
 
             if (companyResult != null)
             {
                 var clientCompanyResult = _clientCompanyService.Create(new ClientCompany { ClientCompanyName = "XYZ Client", VerificationEmail = "abc@xyz.com", VerificationCode = "123456" });
-                _conversationService.Create(new QnAConversation { CompanyId = Guid.NewGuid(), FbSenderId = "ABC", LastQuestionAsked = (int)QnAConversation.Question.None });
+                _conversationService.Create(new QAConversation { CompanyId = Guid.NewGuid(), FbSenderId = "ABC", LastQuestionAsked = (int)QAConversation.Question.None });
                 _jiraUserMgmtService.Create(new JiraUser { UserFbId = "", CompanyId = companyResult.Id, ClientCompanyId = clientCompanyResult.Id, UserNickname = "abc nickname" });
             }
 
-            return Ok(_jiraUserMgmtService.Get());
-            //return Ok(redisResult);
+            //return Ok(_jiraUserMgmtService.Get());
+            return Ok(redisResult != null ? JsonConvert.SerializeObject(redisResult) : "Empty");
         }
     }
 }

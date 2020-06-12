@@ -1,10 +1,11 @@
 ﻿
 using MongoDB.Bson.Serialization.Attributes;
 using System;
+using System.Collections.Generic;
 
 namespace TicketBOT.Models
 {
-    public class QnAConversation
+    public class QAConversation
     {
         // Identifies the last question asked.
         public enum Question
@@ -19,7 +20,13 @@ namespace TicketBOT.Models
         {
             None,
             Greeting,
+            CreateTicket,
+            TicketCreated,
+            SearchCompany,
+            CheckTicket,
+            TicketFound,
             Ending,
+            NotImplemented,
         }
 
         [BsonId]
