@@ -15,6 +15,7 @@ namespace TicketBOT.Models
             Issue,
             TicketCode,
             VerificationCode,
+            Retry,
         }
 
         public enum ConstructType
@@ -29,6 +30,7 @@ namespace TicketBOT.Models
             TicketFound,
             Ending,
             NotImplemented,
+            Retry,
             Error,
         }
 

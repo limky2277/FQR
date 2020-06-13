@@ -1,5 +1,10 @@
+using log4net;
+using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
+using System.IO;
+using System.Reflection;
+using System.Xml;
 
 namespace TicketBOT
 {
@@ -7,14 +12,22 @@ namespace TicketBOT
     {
         public static void Main(string[] args)
         {
-            CreateHostBuilder(args).Build().Run();
+            ConfigureLog4Net();
+            CreateWebHostBuilder(args).Build().Run();
         }
 
-        public static IHostBuilder CreateHostBuilder(string[] args) =>
-            Host.CreateDefaultBuilder(args)
-                .ConfigureWebHostDefaults(webBuilder =>
-                {
-                    webBuilder.UseStartup<Startup>();
-                });
+        public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
+            WebHost.CreateDefaultBuilder(args)
+                .CaptureStartupErrors(true)
+                .UseStartup<Startup>();
+
+        public static void ConfigureLog4Net()
+        {
+            XmlDocument log4netConfig = new XmlDocument();
+            log4netConfig.Load(File.OpenRead("log4net.config"));
+            var repo = LogManager.CreateRepository(Assembly.GetEntryAssembly(),
+                       typeof(log4net.Repository.Hierarchy.Hierarchy));
+            log4net.Config.XmlConfigurator.Configure(repo, log4netConfig["log4net"]);
+        }
     }
 }

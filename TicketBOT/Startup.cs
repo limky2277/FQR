@@ -9,17 +9,20 @@ using TicketBOT.Models;
 using TicketBOT.Services.FacebookServices;
 using TicketBOT.Services.Interfaces;
 using TicketBOT.Services.JiraServices;
-using Microsoft.Extensions.Caching.Redis;
 using EasyCaching.Core.Configurations;
 using TicketBOT.Services.RedisServices;
+using TicketBOT.Middleware;
+using log4net;
 
 namespace TicketBOT
 {
     public class Startup
     {
+        private static readonly ILog _logger = LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
+            _logger.Info("[TicketBOT] Ticket Bot Service (Starting...)");
         }
 
         public IConfiguration Configuration { get; }
@@ -34,14 +37,13 @@ namespace TicketBOT
             services.AddSingleton<JiraUserMgmtService>();
             services.AddSingleton<CompanyService>();
             services.AddSingleton<ClientCompanyService>();
-            services.AddSingleton<ConversationService>();
             services.AddScoped<Bot>();
             services.AddScoped<ISenderCacheService, SenderCacheService>();
 
             // Register AppSettings
             ApplicationSettings applicationSettings = new ApplicationSettings();
             Configuration.GetSection(nameof(ApplicationSettings)).Bind(applicationSettings);
-            services.AddSingleton<ApplicationSettings>(applicationSettings);
+            services.AddSingleton(applicationSettings);
 
             // Register HttpClient
             services.AddHttpClient<IFbApiClientService, FbApiClientService>(client =>
@@ -68,11 +70,17 @@ namespace TicketBOT
                     
                 });
             });
+
+            // Register API Logging middleware
+            services.AddTransient<ApiLoggingMiddleware>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            // Middleware Extension
+            app.UseFactoryBasedLoggingMiddleware();
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -88,6 +96,8 @@ namespace TicketBOT
             {
                 endpoints.MapControllers();
             });
+
+            _logger.Info("[TicketBOT] Ticket Bot Service (Started)");
         }
     }
 }

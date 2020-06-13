@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using System.Collections.Generic;
+using static TicketBOT.Models.Facebook.FacebookQuickReply;
 
 namespace TicketBOT.Models.Facebook
 {
@@ -47,10 +48,5 @@ namespace TicketBOT.Models.Facebook
         public int seq { get; set; }
         public string text { get; set; }
         public QuickReply quick_reply { get; set; }
-    }
-
-    public class QuickReply
-    {
-        public string payload { get; set; }
     }
 }

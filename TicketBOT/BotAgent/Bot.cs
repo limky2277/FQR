@@ -1,10 +1,10 @@
-﻿using EasyCaching.Core;
-using Newtonsoft.Json;
+﻿using log4net;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using TicketBOT.Helpers;
 using TicketBOT.Models;
 using TicketBOT.Models.Facebook;
 using TicketBOT.Services.Interfaces;
@@ -16,12 +16,13 @@ namespace TicketBOT.BotAgent
 {
     public class Bot
     {
+        private static readonly ILog _logger = LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+
         private readonly ICaseMgmtService _caseMgmtService;
         private readonly IFbApiClientService _fbApiClientService;
         private readonly JiraUserMgmtService _jiraUserMgmtService;
         private readonly CompanyService _companyService;
         private readonly ClientCompanyService _clientService;
-        private readonly ConversationService _conversationService;
 
         private FacebookSender _senderInfo;
         private Company _company;
@@ -31,14 +32,13 @@ namespace TicketBOT.BotAgent
         public Bot(ICaseMgmtService caseMgmtService,
             JiraUserMgmtService jiraUserMgmtService, IFbApiClientService fbApiClientService,
             CompanyService companyService, ClientCompanyService clientService,
-            ConversationService conversationService, ISenderCacheService senderCacheService)
+            ISenderCacheService senderCacheService)
         {
             _caseMgmtService = caseMgmtService;
             _jiraUserMgmtService = jiraUserMgmtService;
             _fbApiClientService = fbApiClientService;
             _companyService = companyService;
             _clientService = clientService;
-            _conversationService = conversationService;
             _senderCacheService = senderCacheService;
         }
 
@@ -74,6 +74,9 @@ namespace TicketBOT.BotAgent
                     {
                         if (!lastQuestion.Answered)
                         {
+                            // If retry option = true
+                            // Delete retry option from cache and roll back to conversation before retry
+
                             // If answer not fullfilled, ask/ask again
                             // Extract Conversation.LastQuestionAsked
                             // extract message from payload. Validate input
@@ -98,6 +101,13 @@ namespace TicketBOT.BotAgent
                                     case TICKET_STATUS:
                                         await PrepareCheckTicketStatus();
                                         break;
+                                    case RETRY_YES:
+                                        _senderCacheService.RemoveActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}");
+                                        await ConstructAndSendMessage(ConstructType.Greeting);
+                                        break;
+                                    case RETRY_NO:
+                                        await ConstructAndSendMessage(ConstructType.Ending);
+                                        break;
                                     default:
                                         // prompt: Apologize due to not recognize selected option. Send relevant / available option again
                                         await ConstructAndSendMessage(ConstructType.NotImplemented);
@@ -119,32 +129,11 @@ namespace TicketBOT.BotAgent
             catch (Exception ex)
             {
                 await ConstructAndSendMessage(ConstructType.Error);
+                LoggingHelper.LogError(ex, _logger);
             }
         }
 
-        private string CheckQuickReplyPayload(Messaging incomingMessage)
-        {
-            string payload = null;
-            try
-            {
-                payload = incomingMessage.message.quick_reply.payload;
-            }
-            catch { }
-
-            return payload;
-
-            //switch (payload)
-            //{
-            //    case RAISE_TICKET:
-            //        PrepareRaiseTicket();
-            //        return true;
-            //    case TICKET_STATUS:
-            //        return true;
-            //    default:   
-            //        return false;
-            //}
-        }
-
+        #region Prepare Question for Sender
         private async Task PrepareRaiseTicket()
         {
             // Check is user registered
@@ -191,7 +180,9 @@ namespace TicketBOT.BotAgent
                 await ConstructAndSendMessage(ConstructType.NotImplemented);
             }
         }
+        #endregion 
 
+        #region Validate QnA
         private async Task ValidateQnA(QAConversation conversation, string answer)
         {
             switch (conversation.LastQuestionAsked)
@@ -202,7 +193,7 @@ namespace TicketBOT.BotAgent
                     {
                         // Search clients databases
                         var clientList = _clientService.Get();
-                        var clientResult = clientList.Where(x => x.ClientCompanyName == answer).FirstOrDefault();
+                        var clientResult = clientList.Where(x => x.ClientCompanyName.ToLower() == answer.ToLower()).FirstOrDefault();
 
                         if (clientResult != null)
                         {
@@ -216,13 +207,20 @@ namespace TicketBOT.BotAgent
                         }
                         else
                         {
+                            conversation.ModifiedOn = DateTime.Now;
+                            _senderCacheService.UpsertActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}", conversation);
+
                             // Invalid input / no company found, please try again
-                            await ConstructAndSendMessage(ConstructType.NotImplemented);
+                            await ConstructAndSendMessage(ConstructType.Retry);
                         }
                     }
                     else
                     {
-                        await ConstructAndSendMessage(ConstructType.NotImplemented);
+                        conversation.ModifiedOn = DateTime.Now;
+                        _senderCacheService.UpsertActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}", conversation);
+
+                        // Invalid input / no company found, please try again
+                        await ConstructAndSendMessage(ConstructType.Retry);
                     }
                     break;
                 case (int)Question.VerificationCode:
@@ -252,12 +250,20 @@ namespace TicketBOT.BotAgent
                             else
                             {
                                 // Incorrect verification code. Try again or end conversation
-                                await ConstructAndSendMessage(ConstructType.NotImplemented);
+                                conversation.ModifiedOn = DateTime.Now;
+                                _senderCacheService.UpsertActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}", conversation);
+
+                                // Invalid input / no company found, please try again
+                                await ConstructAndSendMessage(ConstructType.Retry);
                             }
                         }
                         else
                         {
-                            await ConstructAndSendMessage(ConstructType.NotImplemented);
+                            conversation.ModifiedOn = DateTime.Now;
+                            _senderCacheService.UpsertActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}", conversation);
+
+                            // Invalid input / no company found, please try again
+                            await ConstructAndSendMessage(ConstructType.Retry);
                         }
                     }
                     else
@@ -282,8 +288,11 @@ namespace TicketBOT.BotAgent
                     }
                     else
                     {
-                        // Validation failed, please retry
-                        await ConstructAndSendMessage(ConstructType.NotImplemented);
+                        conversation.ModifiedOn = DateTime.Now;
+                        _senderCacheService.UpsertActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}", conversation);
+
+                        // Invalid input / no company found, please try again
+                        await ConstructAndSendMessage(ConstructType.Retry);
                     }
                     break;
                 case (int)Question.TicketCode:
@@ -304,23 +313,29 @@ namespace TicketBOT.BotAgent
                         }
                         else
                         {
-                            // Inform user ticket not found
-                            // Do you want to retry?
-                            await ConstructAndSendMessage(ConstructType.NotImplemented);
+                            conversation.ModifiedOn = DateTime.Now;
+                            _senderCacheService.UpsertActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}", conversation);
+
+                            // Invalid input / no company found, please try again
+                            await ConstructAndSendMessage(ConstructType.Retry);
                         }
                     }
                     else
                     {
-                        // Validation failed, please retry
-                        await ConstructAndSendMessage(ConstructType.NotImplemented);
+                        conversation.ModifiedOn = DateTime.Now;
+                        _senderCacheService.UpsertActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}", conversation);
+
+                        // Invalid input / no company found, please try again
+                        await ConstructAndSendMessage(ConstructType.Retry);
                     }
                     break;
                 default:
                     break;
             }
         }
+        #endregion
 
-        #region Prepare Quick Reply Buttons / Construct Message
+        #region Prepare Quick Reply Buttons + Construct Message, Send Message & Update Cache
         /// <summary>
         /// get text message template
         /// </summary>
@@ -422,6 +437,25 @@ namespace TicketBOT.BotAgent
                         message = new { text = $"Okay great! We've sent you a verification email which contains a verification code. Can you tell me your verification code please?" }
                     }));
                     _senderCacheService.UpsertActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}", new QAConversation { LastQuestionAsked = (int)Question.VerificationCode, Answered = false });
+                    break;
+                case ConstructType.Retry:
+                    var retryOption = new List<QuickReplyOption>
+                    {
+                        new QuickReplyOption { title = RETRY_YES, payload = RETRY_YES },
+                        new QuickReplyOption { title = RETRY_NO, payload = RETRY_NO },
+                    };
+
+                    messageList.Add(JObject.FromObject(new
+                    {
+                        recipient = new { id = _senderInfo.senderConversationId },
+                        message = new { text = $"Sorry, I didn't quite catch that. It seems like invalid option/answer." }
+                    }));
+                    messageList.Add(JObject.FromObject(new
+                    {
+                        recipient = new { id = _senderInfo.senderConversationId },
+                        message = new { text = $"Do you want to retry?", quick_replies = retryOption }
+                    }));
+                    _senderCacheService.UpsertActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}", new QAConversation { LastQuestionAsked = (int)Question.Retry, Answered = true });
                     break;
                 case ConstructType.NotImplemented:
                     messageList.Add(JObject.FromObject(new

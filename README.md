@@ -21,6 +21,7 @@ Give examples
 * [Newtonsoft.Json - 12.0.3](https://www.newtonsoft.com/json/) 
 * [Microsoft.Extensions.Caching.Redis - 2.2.0](https://asp.net/) 
 * [EasyCaching.Redis - 0.8.9](https://github.com/dotnetcore/EasyCaching) 
+* [log4net - 2.0.8](http://logging.apache.org/log4net/) 
 
 ### Installing
 

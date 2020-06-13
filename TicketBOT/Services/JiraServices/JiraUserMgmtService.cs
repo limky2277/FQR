@@ -24,10 +24,10 @@ namespace TicketBOT.Services.JiraServices
             _user.Find(x => true).ToList();
 
         public JiraUser GetById(Guid id) =>
-            _user.Find<JiraUser>(x => x.Id == id).FirstOrDefault();
+            _user.Find(x => x.Id == id).FirstOrDefault();
 
         public JiraUser Get(string userFbId) =>
-           _user.Find<JiraUser>(x => x.UserFbId == userFbId).FirstOrDefault();
+           _user.Find(x => x.UserFbId == userFbId).FirstOrDefault();
 
         public JiraUser Create(JiraUser user)
         {
@@ -51,6 +51,6 @@ namespace TicketBOT.Services.JiraServices
             _user.DeleteOne(x => x.Id == id);
 
         public JiraUser GetUser(string userFbId, Guid companyId) =>
-           _user.Find<JiraUser>(x => x.UserFbId == userFbId && x.CompanyId == companyId && x.Active == true).FirstOrDefault();
+           _user.Find(x => x.UserFbId == userFbId && x.CompanyId == companyId && x.Active == true).FirstOrDefault();
     }
 }

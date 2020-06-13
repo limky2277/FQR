@@ -24,15 +24,15 @@ namespace TicketBOT.Services.JiraServices
             _client.Find(x => true).ToList();
 
         public ClientCompany GetById(Guid id) =>
-            _client.Find<ClientCompany>(x => x.Id == id).FirstOrDefault();
+            _client.Find(x => x.Id == id).FirstOrDefault();
 
         public ClientCompany Get(string clientCompanyName) =>
-            _client.Find<ClientCompany>(x => x.ClientCompanyName == clientCompanyName).FirstOrDefault();
+            _client.Find(x => x.ClientCompanyName == clientCompanyName).FirstOrDefault();
 
         public ClientCompany Create(ClientCompany client)
         {
             // Duplicate check
-            var validate = _client.Find<ClientCompany>(x => x.ClientCompanyName == client.ClientCompanyName).ToList();
+            var validate = _client.Find(x => x.ClientCompanyName == client.ClientCompanyName).ToList();
             if (validate.Count == 0)
             {
                 _client.InsertOne(client);

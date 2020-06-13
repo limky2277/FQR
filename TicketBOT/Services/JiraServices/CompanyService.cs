@@ -24,15 +24,15 @@ namespace TicketBOT.Services.JiraServices
             _company.Find(x => true).ToList();
 
         public Company GetById(Guid id) =>
-            _company.Find<Company>(x => x.Id == id).FirstOrDefault();
+            _company.Find(x => x.Id == id).FirstOrDefault();
 
         public Company Get(string pageId) =>
-            _company.Find<Company>(x => x.FbPageId == pageId).FirstOrDefault();
+            _company.Find(x => x.FbPageId == pageId).FirstOrDefault();
 
         public Company Create(Company company)
         {
             // Duplicate check
-            var validate = _company.Find<Company>(x => x.FbPageId == company.FbPageId && x.FbPageToken == company.FbPageToken).ToList();
+            var validate = _company.Find(x => x.FbPageId == company.FbPageId && x.FbPageToken == company.FbPageToken).ToList();
             if (validate.Count == 0)
             {
                 _company.InsertOne(company);

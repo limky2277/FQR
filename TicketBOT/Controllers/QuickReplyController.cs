@@ -1,13 +1,14 @@
-﻿using System.Collections.Generic;
+﻿using System;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using log4net;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using TicketBOT.BotAgent;
+using TicketBOT.Helpers;
 using TicketBOT.Models;
 using TicketBOT.Models.Facebook;
 using TicketBOT.Services.Interfaces;
@@ -19,6 +20,8 @@ namespace TicketBOT.Controllers
     [ApiController]
     public class QuickReplyController : ControllerBase
     {
+        private static readonly ILog _logger = LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+
         private readonly ApplicationSettings _appSettings;
         private readonly ICaseMgmtService _caseMgmtService;
         private readonly IFbApiClientService _fbApiClientService;
@@ -42,11 +45,19 @@ namespace TicketBOT.Controllers
         // To be called when adding Webhooks to Facebook App
         public IActionResult Get()
         {
-            if (Request.Query["hub.verify_token"] == _appSettings.FacebookApp.CallbackVefifyToken)
+            try
             {
-                return Ok(Request.Query["hub.challenge"].ToString());
+                if (Request.Query["hub.verify_token"] == _appSettings.FacebookApp.CallbackVefifyToken)
+                {
+                    return Ok(Request.Query["hub.challenge"].ToString());
+                }
+                return StatusCode(401);
             }
-            return StatusCode(401);
+            catch (Exception ex)
+            {
+                LoggingHelper.LogError(ex, _logger);
+                return StatusCode(500);
+            }
         }
         #endregion
 
@@ -54,42 +65,50 @@ namespace TicketBOT.Controllers
         [HttpPost]
         public async Task<IActionResult> Post()
         {
-            var signature = Request.Headers["X-Hub-Signature"].FirstOrDefault().Replace("sha1=", "");
-            string body = await new StreamReader(Request.Body).ReadToEndAsync();
-
-            if (!VerifySignature(signature, body))
-                return BadRequest();
-
-            var value = JsonConvert.DeserializeObject<FacebookMessage>(body);
-            if (value._object != "page")
-                return Ok();
-
-            foreach (var entry in value.entry)
+            try
             {
-                // To-do: retrieve pageToken from database based on Page ID
-                var incomingPageId = entry.id;
-                var company = _companyService.Get(incomingPageId);
+                var signature = Request.Headers["X-Hub-Signature"].FirstOrDefault().Replace("sha1=", "");
+                string body = await new StreamReader(Request.Body).ReadToEndAsync();
 
-                // If company registered in db
-                if (company != null)
+                if (!VerifySignature(signature, body))
+                    return BadRequest();
+
+                var value = JsonConvert.DeserializeObject<FacebookMessage>(body);
+                if (value._object != "page")
+                    return Ok();
+
+                foreach (var entry in value.entry)
                 {
-                    foreach (var msgItem in entry.messaging)
+                    // To-do: retrieve pageToken from database based on Page ID
+                    var incomingPageId = entry.id;
+                    var company = _companyService.Get(incomingPageId);
+
+                    // If company registered in db
+                    if (company != null)
                     {
-                        if (msgItem.message == null && msgItem.postback == null) { continue; }
-                        else
+                        foreach (var msgItem in entry.messaging)
                         {
-                            // Dispatch bot agent
-                            await _bot.DispatchAgent(msgItem, company);
+                            if (msgItem.message == null && msgItem.postback == null) { continue; }
+                            else
+                            {
+                                // Dispatch bot agent
+                                await _bot.DispatchAgent(msgItem, company);
+                            }
                         }
                     }
+                    else
+                    {
+                        // To-do: Company not registered in db
+                    }
                 }
-                else
-                {
-                    // To-do: Company not registered in db
-                }
-            }
 
-            return Ok();
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                LoggingHelper.LogError(ex, _logger);
+                return StatusCode(500);
+            }
         }
         #endregion
 
