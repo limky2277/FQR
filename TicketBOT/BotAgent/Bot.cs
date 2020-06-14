@@ -10,7 +10,6 @@ using TicketBOT.Models.Facebook;
 using TicketBOT.Services.Interfaces;
 using TicketBOT.Services.JiraServices;
 using static TicketBOT.Models.Facebook.FacebookQuickReply;
-using static TicketBOT.Models.QAConversation;
 
 namespace TicketBOT.BotAgent
 {
@@ -27,19 +26,19 @@ namespace TicketBOT.BotAgent
         private FacebookSender _senderInfo;
         private Company _company;
 
-        private ISenderCacheService _senderCacheService;
+        private IConversationService _conversationService;
 
         public Bot(ICaseMgmtService caseMgmtService,
             JiraUserMgmtService jiraUserMgmtService, IFbApiClientService fbApiClientService,
             CompanyService companyService, ClientCompanyService clientService,
-            ISenderCacheService senderCacheService)
+            IConversationService conversationService)
         {
             _caseMgmtService = caseMgmtService;
             _jiraUserMgmtService = jiraUserMgmtService;
             _fbApiClientService = fbApiClientService;
             _companyService = companyService;
             _clientService = clientService;
-            _senderCacheService = senderCacheService;
+            _conversationService = conversationService;
         }
 
         public async Task DispatchAgent(Messaging incomingMessage, Company company)
@@ -55,7 +54,7 @@ namespace TicketBOT.BotAgent
                 // INIT.1.1 Check any active conversation (Past x mins) To break the conversation loop
 
                 // If no active conversation, send greeting
-                if (!_senderCacheService.AnyActiveConversation($"{_senderInfo.senderConversationId}~{company.FbPageId}"))
+                if (!_conversationService.AnyActiveConversation($"{_senderInfo.senderConversationId}~{company.FbPageId}"))
                 {
                     // A.1.0
                     // Send greeting first
@@ -68,7 +67,7 @@ namespace TicketBOT.BotAgent
                     // Check db for previous conversation SELECT TOP 1 * FROM Conversation WHERE CompanyId = X AND FbSenderId = X AND ModifiedOn DESC
                     // If record found --> extract Conversation.Answered
                     // var lastQuestion = _conversationService.GetLastQuestion(_company.Id, _senderInfo.id);
-                    var lastQuestion = _senderCacheService.LastConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}");
+                    var lastQuestion = _conversationService.LastConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}");
 
                     if (lastQuestion != null)
                     {
@@ -102,7 +101,7 @@ namespace TicketBOT.BotAgent
                                         await PrepareCheckTicketStatus();
                                         break;
                                     case RETRY_YES:
-                                        _senderCacheService.RemoveActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}");
+                                        _conversationService.RemoveActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}");
                                         await ConstructAndSendMessage(ConstructType.Greeting);
                                         break;
                                     case RETRY_NO:
@@ -183,7 +182,7 @@ namespace TicketBOT.BotAgent
         #endregion 
 
         #region Validate QnA
-        private async Task ValidateQnA(QAConversation conversation, string answer)
+        private async Task ValidateQnA(ConversationData conversation, string answer)
         {
             switch (conversation.LastQuestionAsked)
             {
@@ -199,16 +198,16 @@ namespace TicketBOT.BotAgent
                         {
                             conversation.Answered = true;
                             conversation.AnswerFreeText = clientResult.Id.ToString();
-                            conversation.ModifiedOn = DateTime.Now;
-                            _senderCacheService.UpsertActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}", conversation);
+                            conversation.CreatedOn = DateTime.Now;
+                            _conversationService.UpsertActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}", conversation);
 
                             // Ask for verification code
                             await ConstructAndSendMessage(ConstructType.RequestVerificationCode);
                         }
                         else
                         {
-                            conversation.ModifiedOn = DateTime.Now;
-                            _senderCacheService.UpsertActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}", conversation);
+                            conversation.CreatedOn = DateTime.Now;
+                            _conversationService.UpsertActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}", conversation);
 
                             // Invalid input / no company found, please try again
                             await ConstructAndSendMessage(ConstructType.Retry);
@@ -216,8 +215,8 @@ namespace TicketBOT.BotAgent
                     }
                     else
                     {
-                        conversation.ModifiedOn = DateTime.Now;
-                        _senderCacheService.UpsertActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}", conversation);
+                        conversation.CreatedOn = DateTime.Now;
+                        _conversationService.UpsertActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}", conversation);
 
                         // Invalid input / no company found, please try again
                         await ConstructAndSendMessage(ConstructType.Retry);
@@ -228,10 +227,10 @@ namespace TicketBOT.BotAgent
                     if (!string.IsNullOrEmpty(answer))
                     {
                         // Check previous conversation, get ClientCompanyGuid
-                        List<QAConversation> qaConv = _senderCacheService.GetConversationList($"{_senderInfo.senderConversationId}~{_company.FbPageId}");
+                        List<ConversationData> qaConv = _conversationService.GetConversationList($"{_senderInfo.senderConversationId}~{_company.FbPageId}");
                         if (qaConv != null)
                         {
-                            QAConversation verifyConv = qaConv.Where(x => x.LastQuestionAsked == (int)Question.Company).FirstOrDefault();
+                            ConversationData verifyConv = qaConv.Where(x => x.LastQuestionAsked == (int)Question.Company).FirstOrDefault();
 
                             // Check verification code
                             var clientList = _clientService.Get();
@@ -250,8 +249,8 @@ namespace TicketBOT.BotAgent
                             else
                             {
                                 // Incorrect verification code. Try again or end conversation
-                                conversation.ModifiedOn = DateTime.Now;
-                                _senderCacheService.UpsertActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}", conversation);
+                                conversation.CreatedOn = DateTime.Now;
+                                _conversationService.UpsertActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}", conversation);
 
                                 // Invalid input / no company found, please try again
                                 await ConstructAndSendMessage(ConstructType.Retry);
@@ -259,8 +258,8 @@ namespace TicketBOT.BotAgent
                         }
                         else
                         {
-                            conversation.ModifiedOn = DateTime.Now;
-                            _senderCacheService.UpsertActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}", conversation);
+                            conversation.CreatedOn = DateTime.Now;
+                            _conversationService.UpsertActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}", conversation);
 
                             // Invalid input / no company found, please try again
                             await ConstructAndSendMessage(ConstructType.Retry);
@@ -277,8 +276,8 @@ namespace TicketBOT.BotAgent
                     {
                         conversation.Answered = true;
                         conversation.AnswerFreeText = answer;
-                        conversation.ModifiedOn = DateTime.Now;
-                        _senderCacheService.UpsertActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}", conversation);
+                        conversation.CreatedOn = DateTime.Now;
+                        _conversationService.UpsertActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}", conversation);
 
                         // Jira integration here
 
@@ -288,8 +287,8 @@ namespace TicketBOT.BotAgent
                     }
                     else
                     {
-                        conversation.ModifiedOn = DateTime.Now;
-                        _senderCacheService.UpsertActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}", conversation);
+                        conversation.CreatedOn = DateTime.Now;
+                        _conversationService.UpsertActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}", conversation);
 
                         // Invalid input / no company found, please try again
                         await ConstructAndSendMessage(ConstructType.Retry);
@@ -306,15 +305,15 @@ namespace TicketBOT.BotAgent
                         {
                             conversation.Answered = true;
                             conversation.AnswerFreeText = answer;
-                            conversation.ModifiedOn = DateTime.Now;
-                            _senderCacheService.UpsertActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}", conversation);
+                            conversation.CreatedOn = DateTime.Now;
+                            _conversationService.UpsertActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}", conversation);
 
                             await ConstructAndSendMessage(ConstructType.TicketFound);
                         }
                         else
                         {
-                            conversation.ModifiedOn = DateTime.Now;
-                            _senderCacheService.UpsertActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}", conversation);
+                            conversation.CreatedOn = DateTime.Now;
+                            _conversationService.UpsertActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}", conversation);
 
                             // Invalid input / no company found, please try again
                             await ConstructAndSendMessage(ConstructType.Retry);
@@ -322,8 +321,8 @@ namespace TicketBOT.BotAgent
                     }
                     else
                     {
-                        conversation.ModifiedOn = DateTime.Now;
-                        _senderCacheService.UpsertActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}", conversation);
+                        conversation.CreatedOn = DateTime.Now;
+                        _conversationService.UpsertActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}", conversation);
 
                         // Invalid input / no company found, please try again
                         await ConstructAndSendMessage(ConstructType.Retry);
@@ -369,7 +368,7 @@ namespace TicketBOT.BotAgent
                         message = new { text = $"How can I help you? Here some option(s).", quick_replies = greetingOption }
                     }));
 
-                    _senderCacheService.UpsertActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}", new QAConversation { LastQuestionAsked = (int)Question.None, Answered = true });
+                    _conversationService.UpsertActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}", new ConversationData { LastQuestionAsked = (int)Question.None, Answered = true });
                     break;
                 case ConstructType.Ending:
                     messageList.Add(JObject.FromObject(new
@@ -378,7 +377,7 @@ namespace TicketBOT.BotAgent
                         message = new { text = $"Thank you! Have a nice day! :)." }
                     }));
 
-                    _senderCacheService.RemoveActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}");
+                    _conversationService.RemoveActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}");
                     break;
                 case ConstructType.CreateTicket:
                     messageList.Add(JObject.FromObject(new
@@ -386,7 +385,7 @@ namespace TicketBOT.BotAgent
                         recipient = new { id = _senderInfo.senderConversationId },
                         message = new { text = $"Okay got it! Please tell me about your issue(s)." }
                     }));
-                    _senderCacheService.UpsertActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}", new QAConversation { LastQuestionAsked = (int)Question.Issue, Answered = false });
+                    _conversationService.UpsertActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}", new ConversationData { LastQuestionAsked = (int)Question.Issue, Answered = false });
                     break;
                 case ConstructType.TicketCreated:
                     messageList.Add(JObject.FromObject(new
@@ -399,7 +398,7 @@ namespace TicketBOT.BotAgent
                         recipient = new { id = _senderInfo.senderConversationId },
                         message = new { text = $"Thank you for using TicketBOT! Have a nice day! :)." }
                     }));
-                    _senderCacheService.RemoveActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}");
+                    _conversationService.RemoveActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}");
                     break;
                 case ConstructType.CheckTicket:
                     messageList.Add(JObject.FromObject(new
@@ -407,7 +406,7 @@ namespace TicketBOT.BotAgent
                         recipient = new { id = _senderInfo.senderConversationId },
                         message = new { text = $"Sure! Please quote your ticket code." }
                     }));
-                    _senderCacheService.UpsertActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}", new QAConversation { LastQuestionAsked = (int)Question.TicketCode, Answered = false });
+                    _conversationService.UpsertActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}", new ConversationData { LastQuestionAsked = (int)Question.TicketCode, Answered = false });
                     break;
                 case ConstructType.TicketFound:
                     messageList.Add(JObject.FromObject(new
@@ -420,7 +419,7 @@ namespace TicketBOT.BotAgent
                         recipient = new { id = _senderInfo.senderConversationId },
                         message = new { text = $"Thank you for using TicketBOT! Have a nice day! :)." }
                     }));
-                    _senderCacheService.RemoveActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}");
+                    _conversationService.RemoveActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}");
                     break;
                 case ConstructType.SearchCompany:
                     messageList.Add(JObject.FromObject(new
@@ -428,7 +427,7 @@ namespace TicketBOT.BotAgent
                         recipient = new { id = _senderInfo.senderConversationId },
                         message = new { text = $"Before we get started, I wanna know one thing. Can you tell me your company name please?" }
                     }));
-                    _senderCacheService.UpsertActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}", new QAConversation { LastQuestionAsked = (int)Question.Company, Answered = false });
+                    _conversationService.UpsertActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}", new ConversationData { LastQuestionAsked = (int)Question.Company, Answered = false });
                     break;
                 case ConstructType.RequestVerificationCode:
                     messageList.Add(JObject.FromObject(new
@@ -436,7 +435,7 @@ namespace TicketBOT.BotAgent
                         recipient = new { id = _senderInfo.senderConversationId },
                         message = new { text = $"Okay great! We've sent you a verification email which contains a verification code. Can you tell me your verification code please?" }
                     }));
-                    _senderCacheService.UpsertActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}", new QAConversation { LastQuestionAsked = (int)Question.VerificationCode, Answered = false });
+                    _conversationService.UpsertActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}", new ConversationData { LastQuestionAsked = (int)Question.VerificationCode, Answered = false });
                     break;
                 case ConstructType.Retry:
                     var retryOption = new List<QuickReplyOption>
@@ -455,7 +454,7 @@ namespace TicketBOT.BotAgent
                         recipient = new { id = _senderInfo.senderConversationId },
                         message = new { text = $"Do you want to retry?", quick_replies = retryOption }
                     }));
-                    _senderCacheService.UpsertActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}", new QAConversation { LastQuestionAsked = (int)Question.Retry, Answered = true });
+                    _conversationService.UpsertActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}", new ConversationData { LastQuestionAsked = (int)Question.Retry, Answered = true });
                     break;
                 case ConstructType.NotImplemented:
                     messageList.Add(JObject.FromObject(new
@@ -463,7 +462,7 @@ namespace TicketBOT.BotAgent
                         recipient = new { id = _senderInfo.senderConversationId },
                         message = new { text = $"DEBUG --> Not implemented." }
                     }));
-                    _senderCacheService.RemoveActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}");
+                    _conversationService.RemoveActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}");
                     break;
                 case ConstructType.Error:
                     messageList.Add(JObject.FromObject(new
@@ -471,7 +470,7 @@ namespace TicketBOT.BotAgent
                         recipient = new { id = _senderInfo.senderConversationId },
                         message = new { text = $"DEBUG --> Error. Check exception" }
                     }));
-                    _senderCacheService.RemoveActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}");
+                    _conversationService.RemoveActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}");
                     break;
                 case ConstructType.None:
                     break;

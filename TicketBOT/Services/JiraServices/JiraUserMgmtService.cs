@@ -17,6 +17,9 @@ namespace TicketBOT.Services.JiraServices
             var client = new MongoClient(_appSettings.TicketBOTDb.ConnectionString);
             var database = client.GetDatabase(_appSettings.TicketBOTDb.DatabaseName);
 
+            //var client = new MongoClient("mongodb+srv://dbuser:<password>@cluster0-mbidz.mongodb.net/<dbname>?retryWrites=true&w=majority");
+            //var database = client.GetDatabase("test");
+
             _user = database.GetCollection<JiraUser>(nameof(JiraUser));
         }
 

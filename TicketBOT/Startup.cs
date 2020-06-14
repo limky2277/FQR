@@ -9,8 +9,6 @@ using TicketBOT.Models;
 using TicketBOT.Services.FacebookServices;
 using TicketBOT.Services.Interfaces;
 using TicketBOT.Services.JiraServices;
-using EasyCaching.Core.Configurations;
-using TicketBOT.Services.RedisServices;
 using TicketBOT.Middleware;
 using log4net;
 
@@ -38,7 +36,8 @@ namespace TicketBOT
             services.AddSingleton<CompanyService>();
             services.AddSingleton<ClientCompanyService>();
             services.AddScoped<Bot>();
-            services.AddScoped<ISenderCacheService, SenderCacheService>();
+            //services.AddScoped<ISenderCacheService, SenderCacheService>();
+            services.AddScoped<IConversationService, ConversationService>();
 
             // Register AppSettings
             ApplicationSettings applicationSettings = new ApplicationSettings();
@@ -50,26 +49,6 @@ namespace TicketBOT
                 {
                     client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
                 });
-
-            // Register Redis       
-            services.AddEasyCaching(option =>
-            {
-                services.AddEasyCaching(option =>
-                {
-                    option.UseRedis(config =>
-                    {
-                        // Setup endpoint
-                        config.DBConfig.Endpoints.Add(new ServerEndPoint(applicationSettings.RedisSettings.Host, applicationSettings.RedisSettings.Port));
-
-                        // Setup password
-                        config.DBConfig.Password = applicationSettings.RedisSettings.Password;
-
-                        // Allow admin opration
-                        config.DBConfig.AllowAdmin = true;
-                    }, applicationSettings.RedisSettings.CachingProvider);
-                    
-                });
-            });
 
             // Register API Logging middleware
             services.AddTransient<ApiLoggingMiddleware>();

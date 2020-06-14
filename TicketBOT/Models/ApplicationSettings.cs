@@ -6,7 +6,7 @@ namespace TicketBOT.Models
         public FacebookApp FacebookApp { get; set; }
         public TicketBOTDb TicketBOTDb { get; set; }
         public FacebookGraphApiEndpoint FacebookGraphApiEndpoint { get; set; }
-        public RedisSettings RedisSettings { get; set; }
+        public ConversationSettings ConversationSettings { get; set; }
     }
 
     public class FacebookApp
@@ -26,14 +26,11 @@ namespace TicketBOT.Models
         public string PostMessage { get; set; }
         public string GetProfile { get; set; }
     }
-    public class RedisSettings
-    {
-        public string Host { get; set; }
-        public int Port { get; set; }
-        public string Password { get; set; }
-        public string CachingProvider { get; set; }
 
-        public int TimeSpanMins { get; set; }
+    public class ConversationSettings
+    {
+        public int ExpiryAfterMins { get; set; }
+        public int TimeToLiveMins { get; set; }
 
     }
 }

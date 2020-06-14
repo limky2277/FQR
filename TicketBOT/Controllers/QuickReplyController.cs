@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
@@ -7,6 +8,7 @@ using System.Threading.Tasks;
 using log4net;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using TicketBOT.BotAgent;
 using TicketBOT.Helpers;
 using TicketBOT.Models;
@@ -55,7 +57,7 @@ namespace TicketBOT.Controllers
             }
             catch (Exception ex)
             {
-                LoggingHelper.LogError(ex, _logger);
+                LoggingHelper.LogError(ex, _logger, this.Request, this.RouteData);
                 return StatusCode(500);
             }
         }
@@ -106,8 +108,8 @@ namespace TicketBOT.Controllers
             }
             catch (Exception ex)
             {
-                LoggingHelper.LogError(ex, _logger);
-                return StatusCode(500);
+                LoggingHelper.LogError(ex, _logger, this.Request, this.RouteData);
+                return Ok();
             }
         }
         #endregion

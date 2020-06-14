@@ -1,14 +1,10 @@
-﻿using EasyCaching.Core;
-using log4net;
+﻿using log4net;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Caching.Redis;
-using Newtonsoft.Json;
 using System;
 using TicketBOT.Helpers;
 using TicketBOT.Models;
 using TicketBOT.Services.Interfaces;
 using TicketBOT.Services.JiraServices;
-using static TicketBOT.Models.QAConversation;
 
 namespace TicketBOT.Controllers
 {
@@ -28,16 +24,12 @@ namespace TicketBOT.Controllers
         private readonly CompanyService _companyService;
         private readonly ClientCompanyService _clientCompanyService;
 
-        // Redis
-        private readonly IEasyCachingProvider _cachingProvider;
-        private readonly IEasyCachingProviderFactory _cachingProviderFactory;
-
-        private ISenderCacheService _senderCacheService;
+        private IConversationService _conversationService;
 
         public PlaygroundController(ApplicationSettings appSettings, ICaseMgmtService caseMgmtService, JiraUserMgmtService jiraUserMgmtService,
             IFbApiClientService fbApiClientService, CompanyService companyService,
-            ClientCompanyService clientCompanyService, IEasyCachingProviderFactory cachingProviderFactory, 
-            ISenderCacheService senderCacheService)
+            ClientCompanyService clientCompanyService,
+            IConversationService conversationService)
         {
             _appSettings = appSettings;
             _caseMgmtService = caseMgmtService;
@@ -45,41 +37,27 @@ namespace TicketBOT.Controllers
             _fbApiClientService = fbApiClientService;
             _companyService = companyService;
             _clientCompanyService = clientCompanyService;
-            _cachingProviderFactory = cachingProviderFactory;
-            _cachingProvider = _cachingProviderFactory.GetCachingProvider(_appSettings.RedisSettings.CachingProvider);
-            _senderCacheService = senderCacheService;
+            _conversationService = conversationService;
         }
 
         public IActionResult Get()
         {
             try
             {
-                // Test error logs
-                //int a = 1, b = 0;
-                //var c = a / b;
+                // Seed Data
+                //var companyResult = _companyService.Create(new Company { CompanyName = "ABC Company", FbPageId = "102327571503111", FbPageToken = "EAADcf5Tn8Q0BAKTEkzXUkwgMDSEFKjwuZA2FXKDlFKdAPyHgj1qxZAsZC5OZApEiQE7K5ljqxfkLTtJXrU4WmIfar2fzKRrZAw3UZAN8LNYitIAZBZCMIL4Wzu0ysA6scT6gWjzfQa1dDZBv5RRAynEHVL4O9WZAUUDh1M2vL41kSp0vYNFokJ4Bomax48KC3Gf6wZD" });
 
-                //_cachingProvider.Set("Key123", "Value1234", TimeSpan.FromMinutes(_appSettings.RedisSettings.TimeSpanMins));
+                //if (companyResult != null)
+                //{
+                //    var clientCompanyResult = _clientCompanyService.Create(new ClientCompany { ClientCompanyName = "XYZ Client", VerificationEmail = "abc@xyz.com", VerificationCode = "123456" });
+                //    // _jiraUserMgmtService.Create(new JiraUser { UserFbId = "3058942664196267", CompanyId = companyResult.Id, ClientCompanyId = clientCompanyResult.Id, UserNickname = "abc nickname" });
+                //}
 
-                //var redisResult = _cachingProvider.Get<object>("Key123");
-
-                //_senderCacheService.UpsertActiveConversation("3058942664196267", new QAConversation { FbSenderId = "3058942664196267", LastQuestionAsked = (int)Question.Issue, AnswerFreeText= "issue", Answered = true });
-
-                var redisResult = _senderCacheService.GetConversationList("");
-
-                var companyResult = _companyService.Create(new Company { CompanyName = "ABC Company", FbPageId = "", FbPageToken = "" });
-
-                if (companyResult != null)
-                {
-                    var clientCompanyResult = _clientCompanyService.Create(new ClientCompany { ClientCompanyName = "XYZ Client", VerificationEmail = "abc@xyz.com", VerificationCode = "123456" });
-                    _jiraUserMgmtService.Create(new JiraUser { UserFbId = "3058942664196267", CompanyId = companyResult.Id, ClientCompanyId = clientCompanyResult.Id, UserNickname = "abc nickname" });
-                }
-
-                //return Ok(_jiraUserMgmtService.Get());
-                return Ok(redisResult != null ? JsonConvert.SerializeObject(redisResult) : "Empty");
+                return Ok("Seed Complete.");
             }
             catch (Exception ex)
             {
-                LoggingHelper.LogError(ex, _logger);
+                LoggingHelper.LogError(ex, _logger, this.Request, this.RouteData);
                 return StatusCode(500);
             }
         }
