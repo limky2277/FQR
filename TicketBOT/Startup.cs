@@ -32,7 +32,6 @@ namespace TicketBOT
             services.AddControllers();
 
             // Register DI
-            services.AddScoped<ICaseMgmtService, JiraCaseMgmtService>();
             services.AddSingleton<JiraUserMgmtService>();
             services.AddSingleton<CompanyService>();
             services.AddSingleton<ClientCompanyService>();
@@ -45,12 +44,12 @@ namespace TicketBOT
             Configuration.GetSection(nameof(ApplicationSettings)).Bind(applicationSettings);
             services.AddSingleton(applicationSettings);
 
-            // Register HttpClient
-            services.AddHttpClient<IFbApiClientService, FbApiClientService>(client =>
-                {
-                    client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                });
+            // Register FB service
+            services.AddSingleton<IFbApiClientService, FbApiClientService>();
 
+            //Register JIRA case management service
+            services.AddSingleton<ICaseMgmtService, JiraCaseMgmtService>();
+           
             // Register API Logging middleware
             services.AddTransient<ApiLoggingMiddleware>();
 
@@ -84,7 +83,8 @@ namespace TicketBOT
             // Swagger.io
             app.UseSwaggerUI(c =>
             {
-                c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
+                string swaggerJsonBasePath = string.IsNullOrWhiteSpace(c.RoutePrefix) ? "." : "..";
+                c.SwaggerEndpoint($"{swaggerJsonBasePath}/swagger/v1/swagger.json", "My API V1");                
             });
 
             app.UseEndpoints(endpoints =>

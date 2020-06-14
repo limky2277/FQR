@@ -13,12 +13,10 @@ namespace TicketBOT.Services.FacebookServices
 {
     public class FbApiClientService : IFbApiClientService
     {
-        private static HttpClient _client;
         private readonly ApplicationSettings _appSettings;
 
-        public FbApiClientService(HttpClient client, ApplicationSettings appSettings)
+        public FbApiClientService(ApplicationSettings appSettings)
         {
-            _client = client;
             _appSettings = appSettings;
         }
 
@@ -29,7 +27,6 @@ namespace TicketBOT.Services.FacebookServices
             {
                 return JsonConvert.DeserializeObject<FacebookSender>(resp.Content.ReadAsStringAsync().Result);
             }
-
             return null;
         }
 

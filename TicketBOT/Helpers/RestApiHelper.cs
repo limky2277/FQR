@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Threading.Tasks;
 
 namespace TicketBOT.Helpers
@@ -13,6 +14,12 @@ namespace TicketBOT.Helpers
         static RestApiHelper()
         {
             _client = new HttpClient();
+            _client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        }
+
+        public static Task<HttpResponseMessage> SendAsync(HttpRequestMessage request)
+        {
+            return _client.SendAsync(request);
         }
 
         public static Task<HttpResponseMessage> GetAsync(string requestUri)

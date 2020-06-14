@@ -1,6 +1,7 @@
 ﻿using log4net;
 using Microsoft.AspNetCore.Mvc;
 using System;
+using System.Threading.Tasks;
 using TicketBOT.Helpers;
 using TicketBOT.Models;
 using TicketBOT.Services.Interfaces;
@@ -40,7 +41,9 @@ namespace TicketBOT.Controllers
             _conversationService = conversationService;
         }
 
+
         [HttpGet]
+        [Route("Get")]
         public IActionResult Get()
         {
             try
@@ -61,6 +64,18 @@ namespace TicketBOT.Controllers
                 LoggingHelper.LogError(ex, _logger, this.Request, this.RouteData);
                 return StatusCode(500);
             }
+        }
+
+        [HttpGet]
+        [Route("GetCaseDetail")]
+        public IActionResult GetCaseDetail()
+        {
+            Company c = new Company() { TicketSysUrl = "http://58.185.112.2:8550",
+             TicketSysId = "developer@sabreinfo.com.sg",
+              TicketSysPassword = "DevS@b3r"
+            };
+
+           return Ok(_caseMgmtService.GetCaseStatusAsync(c, "109", "LVBON-434").Result);            
         }
     }
 }

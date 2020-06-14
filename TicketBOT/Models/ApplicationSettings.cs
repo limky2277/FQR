@@ -8,6 +8,7 @@ namespace TicketBOT.Models
         public FacebookGraphApiEndpoint FacebookGraphApiEndpoint { get; set; }
         public ConversationSettings ConversationSettings { get; set; }
         public SwaggerSettings SwaggerSettings { get; set; }
+        public JIRAApiEndpoint JIRAApiEndpoint { get; set; }
     }
 
     public class FacebookApp
@@ -39,5 +40,11 @@ namespace TicketBOT.Models
         public string JsonRoute { get; set; }
         public string Description { get; set; }
         public string UIEndpoint { get; set; }
+    }
+
+    public class JIRAApiEndpoint
+    {
+        public string GetStatus { get; set; }
+        public string CreateCase { get; set; }
     }
 }
