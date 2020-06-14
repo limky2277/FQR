@@ -7,6 +7,7 @@ namespace TicketBOT.Models
         public TicketBOTDb TicketBOTDb { get; set; }
         public FacebookGraphApiEndpoint FacebookGraphApiEndpoint { get; set; }
         public ConversationSettings ConversationSettings { get; set; }
+        public SwaggerSettings SwaggerSettings { get; set; }
     }
 
     public class FacebookApp
@@ -32,5 +33,11 @@ namespace TicketBOT.Models
         public int ExpiryAfterMins { get; set; }
         public int TimeToLiveMins { get; set; }
 
+    }
+    public class SwaggerSettings
+    {
+        public string JsonRoute { get; set; }
+        public string Description { get; set; }
+        public string UIEndpoint { get; set; }
     }
 }

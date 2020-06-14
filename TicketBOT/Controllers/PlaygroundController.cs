@@ -40,6 +40,7 @@ namespace TicketBOT.Controllers
             _conversationService = conversationService;
         }
 
+        [HttpGet]
         public IActionResult Get()
         {
             try

@@ -45,6 +45,7 @@ namespace TicketBOT.Controllers
 
         #region GET --> Verify Token / Secret
         // To be called when adding Webhooks to Facebook App
+       [HttpGet]
         public IActionResult Get()
         {
             try
