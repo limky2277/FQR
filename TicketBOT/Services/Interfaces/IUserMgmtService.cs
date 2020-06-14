@@ -6,6 +6,6 @@ namespace TicketBOT.Services.Interfaces
 {
     public interface IUserMgmtService
     {
-        JiraUser GetUser(string userFbId, Guid companyId);
+        TicketSysUser GetUser(string userFbId, Guid companyId);
     }
 }

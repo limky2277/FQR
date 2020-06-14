@@ -6,10 +6,10 @@ using TicketBOT.Services.Interfaces;
 
 namespace TicketBOT.Services.JiraServices
 {
-    public class JiraUserMgmtService : IGenericService<JiraUser>, IUserMgmtService
+    public class JiraUserMgmtService : IGenericService<TicketSysUser>, IUserMgmtService
     {
         private readonly ApplicationSettings _appSettings;
-        private readonly IMongoCollection<JiraUser> _user;
+        private readonly IMongoCollection<TicketSysUser> _user;
 
         public JiraUserMgmtService(ApplicationSettings appSettings)
         {
@@ -20,22 +20,22 @@ namespace TicketBOT.Services.JiraServices
             //var client = new MongoClient("mongodb+srv://dbuser:<password>@cluster0-mbidz.mongodb.net/<dbname>?retryWrites=true&w=majority");
             //var database = client.GetDatabase("test");
 
-            _user = database.GetCollection<JiraUser>(nameof(JiraUser));
+            _user = database.GetCollection<TicketSysUser>(nameof(TicketSysUser));
         }
 
-        public List<JiraUser> Get() =>
+        public List<TicketSysUser> Get() =>
             _user.Find(x => true).ToList();
 
-        public JiraUser GetById(Guid id) =>
+        public TicketSysUser GetById(Guid id) =>
             _user.Find(x => x.Id == id).FirstOrDefault();
 
-        public JiraUser Get(string userFbId) =>
+        public TicketSysUser Get(string userFbId) =>
            _user.Find(x => x.UserFbId == userFbId).FirstOrDefault();
 
-        public JiraUser Create(JiraUser user)
+        public TicketSysUser Create(TicketSysUser user)
         {
             // Duplicate check
-            var validate = _user.Find<JiraUser>(x => x.UserFbId == user.UserFbId && x.CompanyId == user.CompanyId && x.Active == true).ToList();
+            var validate = _user.Find<TicketSysUser>(x => x.UserFbId == user.UserFbId && x.CompanyId == user.CompanyId && x.Active == true).ToList();
             if (validate.Count == 0)
             {
                 _user.InsertOne(user);
@@ -44,16 +44,16 @@ namespace TicketBOT.Services.JiraServices
             return null;
         }
 
-        public void Update(Guid id, JiraUser user) =>
+        public void Update(Guid id, TicketSysUser user) =>
            _user.ReplaceOne(x => x.Id == id, user);
 
-        public void Remove(JiraUser user) =>
+        public void Remove(TicketSysUser user) =>
             _user.DeleteOne(x => x.Id == user.Id);
 
         public void Remove(Guid id) =>
             _user.DeleteOne(x => x.Id == id);
 
-        public JiraUser GetUser(string userFbId, Guid companyId) =>
+        public TicketSysUser GetUser(string userFbId, Guid companyId) =>
            _user.Find(x => x.UserFbId == userFbId && x.CompanyId == companyId && x.Active == true).FirstOrDefault();
     }
 }

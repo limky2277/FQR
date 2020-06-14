@@ -3,7 +3,7 @@ using System;
 
 namespace TicketBOT.Models
 {
-    public class JiraUser
+    public class TicketSysUser
     {
         [BsonId]
         //[BsonRepresentation(BsonType.ObjectId)]

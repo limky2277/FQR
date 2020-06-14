@@ -41,6 +41,12 @@ namespace TicketBOT.BotAgent
             _conversationService = conversationService;
         }
 
+        // Ask which sys?
+        // ans: WMS
+        // Description issue
+        // ans: not showing...
+        // Preview case
+
         public async Task DispatchAgent(Messaging incomingMessage, Company company)
         {
             try
@@ -239,7 +245,7 @@ namespace TicketBOT.BotAgent
                             if (clientResult != null)
                             {
                                 // Register user
-                                JiraUser user = new JiraUser { UserFbId = _senderInfo.id, ClientCompanyId = clientResult.Id, CompanyId = _company.Id, UserNickname = $"{_senderInfo.last_name} {_senderInfo.first_name}" };
+                                TicketSysUser user = new TicketSysUser { UserFbId = _senderInfo.id, ClientCompanyId = clientResult.Id, CompanyId = _company.Id, UserNickname = $"{_senderInfo.last_name} {_senderInfo.first_name}" };
 
                                 _jiraUserMgmtService.Create(user);
 

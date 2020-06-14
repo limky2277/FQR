@@ -11,9 +11,9 @@ namespace TicketBOT.Models
         public string CompanyName { get; set; }
         public string FbPageId { get; set; }
         public string FbPageToken { get; set; }
-        public string JiraUrl { get; set; }
-        public string JiraId { get; set; }
-        public string JiraPassword { get; set; }
+        public string TicketSysUrl { get; set; }
+        public string TicketSysId { get; set; }
+        public string TicketSysPassword { get; set; }
         public DateTime CreatedOn { get; set; } = DateTime.Now;
         public bool Active { get; set; } = true;
     }
