@@ -53,7 +53,7 @@ namespace TicketBOT.Controllers
 
                 //if (companyResult != null)
                 //{
-                //    var clientCompanyResult = _clientCompanyService.Create(new ClientCompany { ClientCompanyName = "XYZ Client", VerificationEmail = "abc@xyz.com", VerificationCode = "123456" });
+                //    var clientCompanyResult = _clientCompanyService.Create(new ClientCompany { ClientCompanyName = "XYZ Client", TicketSysCompanyCode = "109", VerificationEmail = "abc@xyz.com", VerificationCode = "123456" });
                 //    // _jiraUserMgmtService.Create(new JiraUser { UserFbId = "3058942664196267", CompanyId = companyResult.Id, ClientCompanyId = clientCompanyResult.Id, UserNickname = "abc nickname" });
                 //}
 

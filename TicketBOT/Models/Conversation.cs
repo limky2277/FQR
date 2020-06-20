@@ -7,7 +7,9 @@ namespace TicketBOT.Models
     {
         None, // last action / not involve any question.
         Company,
-        Issue,
+        Application,
+        IssueApplicationName,
+        IssueDescription,
         TicketCode,
         VerificationCode,
         Retry,
@@ -20,6 +22,8 @@ namespace TicketBOT.Models
         SearchCompany,
         RequestVerificationCode,
         CreateTicket,
+        TicketDescription,
+        TicketCreationConfirmation,
         TicketCreated,
         CheckTicket,
         TicketFound,

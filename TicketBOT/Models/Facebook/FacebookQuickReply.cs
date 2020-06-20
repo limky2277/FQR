@@ -9,6 +9,8 @@ namespace TicketBOT.Models.Facebook
         public const string JUST_BROWSE = "Just browsing";
         public const string RETRY_YES = "Yes please!";
         public const string RETRY_NO = "No, thank you.";
+        public const string CASE_SUBMIT_YES = "Submit now.";
+        public const string CASE_SUBMIT_NO = "Cancel submission.";
 
         public class QuickReplyOption
         {
