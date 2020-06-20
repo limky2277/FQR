@@ -14,6 +14,7 @@ namespace TicketBOT.Helpers
         static RestApiHelper()
         {
             _client = new HttpClient();
+            _client = new HttpClient(new LoggingHandler(new HttpClientHandler()));
             _client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         }
 
