@@ -99,5 +99,19 @@ namespace TicketBOT.Controllers
                             .CreateCaseAsync(c, cl, $"Issue in test on {DateTime.Now.ToString("dd MMM yyyy")}", 
                             "I have an issue in my system. please HELPPPPP!!!").Result) ;
         }
+
+        [HttpPost]
+        [Route("GetCompanyCodes")]
+        public IActionResult GetCompanyCodes(string clientCompanyName)
+        {
+            Company c = new Company()
+            {
+                TicketSysUrl = "http://58.185.112.2:8550",
+                TicketSysId = "developer@sabreinfo.com.sg",
+                TicketSysPassword = "DevS@b3r"
+            };
+
+            return Ok(_caseMgmtService.GetCompanyCodes(c, clientCompanyName).Result);
+        }
     }
 }

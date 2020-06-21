@@ -1,4 +1,5 @@
 ﻿using log4net;
+using Microsoft.AspNetCore.Mvc.Filters;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -159,8 +160,83 @@ namespace TicketBOT.Services.JiraServices
             };
         }
 
-       
+        public async Task<List<ClientCompany>> GetCompanyCodes(Company company, string clientCompanyName)
+        {
+            HttpResponseMessage resp = null;
+            try
+            {
+                List<ClientCompany> companies = new List<ClientCompany>();
 
-       
+                if (string.IsNullOrWhiteSpace(clientCompanyName))
+                    throw new ArgumentException($"Please enter correct cilent company name", "clientCompanyName");
+                
+                if (company == null)
+                    throw new ArgumentException($"Please provide company data", "company");
+
+                // get companies page by page to find the matching client company name.                
+                int start = 0;
+                int limit = 100;
+
+                //used for OTP
+                Random generator = new Random();                
+
+                //Looks like jira doesnt have an option to find the service desk using name. So we have to loop through all service desk and find matching names
+                //This loop will find all matching records and breaks once it search through all companies.
+                while (true)
+                {
+                    //New req need to create else client throws error [The request message was already sent.]
+                    var JIRAReq = getJIRARequestObj(company.TicketSysId, company.TicketSysPassword);
+                    JIRAReq.Method = HttpMethod.Get;
+                    JIRAReq.RequestUri = new Uri(string.Format(_appSettings.JIRAApiEndpoint.GetServiceDesk, company.TicketSysUrl, start, limit));
+                    resp = await RestApiHelper.SendAsync(JIRAReq);
+                    resp.EnsureSuccessStatusCode();
+
+                    //FilterCollection to get matching names
+                    var servicedeskDetails = JsonConvert.DeserializeObject<ServicedeskDetails>(await resp.Content.ReadAsStringAsync());
+                    if (servicedeskDetails.size > 0)
+                    {
+                        servicedeskDetails
+                              .values
+                              .Where(x => (
+                                              (x?.projectName?.Contains(clientCompanyName, StringComparison.InvariantCultureIgnoreCase)) ?? false
+                                          )
+                                     )?.ToList()
+                                     ?.ForEach(srvDsk =>
+                                                  companies.Add(
+                                                            new ClientCompany()
+                                                            {
+                                                                ClientCompanyName = srvDsk.projectName,
+                                                                TicketSysCompanyCode = srvDsk.id,
+                                                                VerificationCode = generator.Next(0, 9999).ToString("D4"),
+                                                                Active = false, //ONLY IF THEY ENTER CORRECT OTP, WE activate
+                                                                CreatedOn = DateTime.Now,
+                                                                VerificationEmail = company.contactEmail //currently using conpanys contact. user should call and get OTP from company
+                                                            }                 
+                                                            ));
+                    }
+                    else
+                        break;
+                    start += (limit + 1);                    
+                }
+
+                //need to get the email info of the customer
+                //as there is no such api available, we are designing to send the OTP  to the Company email.
+
+                return companies;
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex);
+                string APIError = "<EMPTY>";
+                if (resp != null)
+                {
+                    var error = JsonConvert.DeserializeObject<Error>(await resp.Content.ReadAsStringAsync());
+                    if (error != null)
+                        APIError = error.errorMessage;
+                }
+
+                throw new Exception($"Error: {ex.Message}. API Error:{APIError}");
+            }
+        }
     }
 }

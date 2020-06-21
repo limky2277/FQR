@@ -46,5 +46,6 @@ namespace TicketBOT.Models
     {
         public string GetStatus { get; set; }
         public string CreateCase { get; set; }
+        public string GetServiceDesk { get; set; }
     }
 }

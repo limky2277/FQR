@@ -29,9 +29,13 @@ namespace TicketBOT.Models.JIRA
         public string jiraRest { get; set; }
         public AvatarUrls avatarUrls { get; set; }
         public string self { get; set; }
+        public string context { get; set; }
+        public string next { get; set; }
+        public string prev { get; set; }
+        public string @base { get; set; }
     }
 
-    public class Reporter
+public class Reporter
     {
         public string name { get; set; }
         public string key { get; set; }
