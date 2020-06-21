@@ -1,5 +1,6 @@
 ﻿using log4net;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.VisualBasic;
 using System;
 using System.Threading.Tasks;
 using TicketBOT.Helpers;
@@ -75,7 +76,42 @@ namespace TicketBOT.Controllers
               TicketSysPassword = "DevS@b3r"
             };
 
-           return Ok(_caseMgmtService.GetCaseStatusAsync(c, "109", "LVBON-434").Result);            
+           return Ok(_caseMgmtService.GetCaseStatusAsync(c, "124", "ZZTST-1").Result);            
+        }
+
+        [HttpPost]
+        [Route("CreateCase")]
+        public IActionResult CreateCase()
+        {
+            Company c = new Company()
+            {
+                TicketSysUrl = "http://58.185.112.2:8550",
+                TicketSysId = "developer@sabreinfo.com.sg",
+                TicketSysPassword = "DevS@b3r"
+            };
+
+            ClientCompany cl = new ClientCompany()
+            {
+                TicketSysCompanyCode = "124"
+            };
+
+            return Ok(_caseMgmtService
+                            .CreateCaseAsync(c, cl, $"Issue in test on {DateTime.Now.ToString("dd MMM yyyy")}", 
+                            "I have an issue in my system. please HELPPPPP!!!").Result) ;
+        }
+
+        [HttpPost]
+        [Route("GetCompanyCodes")]
+        public IActionResult GetCompanyCodes(string clientCompanyName)
+        {
+            Company c = new Company()
+            {
+                TicketSysUrl = "http://58.185.112.2:8550",
+                TicketSysId = "developer@sabreinfo.com.sg",
+                TicketSysPassword = "DevS@b3r"
+            };
+
+            return Ok(_caseMgmtService.GetClientCompanies(c, clientCompanyName).Result);
         }
     }
 }

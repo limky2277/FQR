@@ -15,6 +15,7 @@ namespace TicketBOT.Models
         public string TicketSysId { get; set; }
         public string TicketSysPassword { get; set; }
         public DateTime CreatedOn { get; set; } = DateTime.Now;
+        public string contactEmail { get; set; }
         public bool Active { get; set; } = true;
     }
 }

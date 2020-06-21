@@ -29,9 +29,13 @@ namespace TicketBOT.Models.JIRA
         public string jiraRest { get; set; }
         public AvatarUrls avatarUrls { get; set; }
         public string self { get; set; }
+        public string context { get; set; }
+        public string next { get; set; }
+        public string prev { get; set; }
+        public string @base { get; set; }
     }
 
-    public class Reporter
+public class Reporter
     {
         public string name { get; set; }
         public string key { get; set; }
@@ -75,8 +79,13 @@ namespace TicketBOT.Models.JIRA
         public Uri Self { get; set; }
     }
 
-    public class CaseDetail
+    public class JIRACaseDetail
     {
+        public JIRACaseDetail()
+        {
+            requestFieldValues = new List<RequestFieldValue>();
+
+        }
         public IList<string> _expands { get; set; }
         public int issueId { get; set; }
         public string issueKey { get; set; }
@@ -84,7 +93,7 @@ namespace TicketBOT.Models.JIRA
         public string serviceDeskId { get; set; }
         public CreatedDate createdDate { get; set; }
         public Reporter reporter { get; set; }
-        public IList<RequestFieldValue> requestFieldValues { get; set; }
+        public List<RequestFieldValue> requestFieldValues { get; set; }
         public CurrentStatus currentStatus { get; set; }
 
         [JsonProperty("_links")]
