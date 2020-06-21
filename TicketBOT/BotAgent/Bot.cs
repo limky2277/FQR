@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using TicketBOT.Helpers;
 using TicketBOT.Models;
 using TicketBOT.Models.Facebook;
+using TicketBOT.Models.JIRA;
 using TicketBOT.Services.Interfaces;
 using TicketBOT.Services.JiraServices;
 using static TicketBOT.Models.Facebook.FacebookQuickReply;
@@ -22,6 +23,7 @@ namespace TicketBOT.BotAgent
         private readonly JiraUserMgmtService _jiraUserMgmtService;
         private readonly CompanyService _companyService;
         private readonly ClientCompanyService _clientService;
+        private readonly UserCaseNotifService _userCaseNotifService;
 
         private FacebookSender _senderInfo;
         private Company _company;
@@ -31,7 +33,7 @@ namespace TicketBOT.BotAgent
         public Bot(ICaseMgmtService caseMgmtService,
             JiraUserMgmtService jiraUserMgmtService, IFbApiClientService fbApiClientService,
             CompanyService companyService, ClientCompanyService clientService,
-            IConversationService conversationService)
+            IConversationService conversationService, UserCaseNotifService userCaseNotifService)
         {
             _caseMgmtService = caseMgmtService;
             _jiraUserMgmtService = jiraUserMgmtService;
@@ -39,6 +41,7 @@ namespace TicketBOT.BotAgent
             _companyService = companyService;
             _clientService = clientService;
             _conversationService = conversationService;
+            _userCaseNotifService = userCaseNotifService;
         }
 
         public async Task DispatchAgent(Messaging incomingMessage, Company company)
@@ -112,6 +115,12 @@ namespace TicketBOT.BotAgent
                                         break;
                                     case CASE_SUBMIT_NO:
                                         await ConstructAndSendMessage(ConstructType.Ending);
+                                        break;
+                                    case JUST_BROWSE:
+                                        await ConstructAndSendMessage(ConstructType.Ending);
+                                        break;
+                                    case CANCEL_NOTIF:
+                                        await UserUnsubscribeNotification();
                                         break;
                                     default:
                                         // prompt: Apologize due to not recognize selected option. Send relevant / available option again
@@ -212,6 +221,28 @@ namespace TicketBOT.BotAgent
                 // await ConstructAndSendMessage(ConstructType.Greeting)
                 await ConstructAndSendMessage(ConstructType.NotImplemented);
             }
+        }
+
+        private async Task UserUnsubscribeNotification()
+        {
+            // Clear all notification queue in db
+            var jiraUser = _jiraUserMgmtService.Get(_senderInfo.senderConversationId);
+
+            List<TicketSysNotification> notifList = _userCaseNotifService.Get();
+            notifList = notifList.Where(x => x.TicketSysUserId == jiraUser.Id).ToList();
+            foreach (var notif in notifList)
+            {
+                _userCaseNotifService.Remove(notif);
+            }
+
+            var notifUnsubSuccess = JObject.FromObject(new
+            {
+                recipient = new { id = _senderInfo.senderConversationId },
+                message = new { text = $"Successfully unsubscribe notification." }
+            });
+
+            // Send ending
+            await ConstructAndSendMessage(ConstructType.Ending, null, notifUnsubSuccess);
         }
         #endregion 
 
@@ -448,6 +479,7 @@ namespace TicketBOT.BotAgent
                     {
                         new QuickReplyOption { title = RAISE_TICKET, payload = RAISE_TICKET },
                         new QuickReplyOption { title = TICKET_STATUS, payload = TICKET_STATUS },
+                        new QuickReplyOption { title = CANCEL_NOTIF, payload = CANCEL_NOTIF },
                         new QuickReplyOption { title = JUST_BROWSE, payload = JUST_BROWSE },
                     };
 
@@ -535,6 +567,34 @@ namespace TicketBOT.BotAgent
                         recipient = new { id = _senderInfo.senderConversationId },
                         message = new { text = $"Thank you for using TicketBOT! Have a nice day! :)." }
                     }));
+
+                    // One time notification integration here
+                    // Check user whether already subscribe
+                    var userNotifResult = _userCaseNotifService.Get(caseDetailResult.CaseKey);
+                    if (userNotifResult == null)
+                    {
+                        if (caseDetailResult.Status != JiraServiceDeskStatus.Declined || caseDetailResult.Status != JiraServiceDeskStatus.Completed)
+                        {
+                            messageList.Add(JObject.FromObject(new
+                            {
+                                recipient = new { id = _senderInfo.senderConversationId },
+                                message = new
+                                {
+                                    attachment = new
+                                    {
+                                        type = "template",
+                                        payload = new
+                                        {
+                                            template_type = "one_time_notif_req",
+                                            title = $"Do you want to get notified with {caseDetailResult.CaseKey} updates?",
+                                            payload = string.Format(FacebookCustomPayload.CASE_GET_NOTIFIED_PAYLOAD, caseDetailResult.CaseKey)
+                                        }
+                                    }
+                                }
+                            }));
+                        }
+                    }
+
                     _conversationService.RemoveActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}");
                     break;
                 case ConstructType.SearchCompany:

@@ -25,6 +25,7 @@ namespace TicketBOT.Models.Facebook
         public long timestamp { get; set; }
         public Message message { get; set; }
         public Postback postback { get; set; }
+        public Optin optin { get; set; }
     }
 
     public class Postback
@@ -48,5 +49,12 @@ namespace TicketBOT.Models.Facebook
         public int seq { get; set; }
         public string text { get; set; }
         public QuickReply quick_reply { get; set; }
+    }
+
+    public class Optin
+    {
+        public string type { get; set; }
+        public string payload { get; set; }
+        public string one_time_notif_token { get; set; }
     }
 }

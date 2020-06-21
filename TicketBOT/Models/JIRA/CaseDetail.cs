@@ -8,6 +8,31 @@ using System.Threading.Tasks;
 
 namespace TicketBOT.Models.JIRA
 {
+    public class JiraServiceDeskStatus
+    {
+        /*
+        Declined
+        Waiting for support
+        Waiting for customer
+        Pending
+        Canceled
+        Escalated
+        Waiting for approval
+        Awaiting CAB approval
+        Planning
+        Awaiting implementation
+        Implementing
+        Peer review / change manager approval
+        Work in progress
+        Completed
+        Under investigation
+        */
+
+        public const string Declined = "Declined";
+        public const string Completed = "Completed";
+
+    }
+
     public class CreatedDate
     {
         public DateTime iso8601 { get; set; }
@@ -35,7 +60,7 @@ namespace TicketBOT.Models.JIRA
         public string @base { get; set; }
     }
 
-public class Reporter
+    public class Reporter
     {
         public string name { get; set; }
         public string key { get; set; }
@@ -99,7 +124,5 @@ public class Reporter
         [JsonProperty("_links")]
         public TemperaturesLinks Links { get; set; }
     }
-
-
 
 }

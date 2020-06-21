@@ -30,10 +30,11 @@ namespace TicketBOT.Controllers
         private readonly JiraUserMgmtService _jiraUserMgmtService;
         private readonly CompanyService _companyService;
         private readonly Bot _bot;
+        private readonly OneTimeNotification _oneTimeNotifAgent;
 
         public QuickReplyController(ApplicationSettings appSettings, ICaseMgmtService caseMgmtService,
             JiraUserMgmtService jiraUserMgmtService,
-            IFbApiClientService fbApiClientService, CompanyService companyService, Bot bot)
+            IFbApiClientService fbApiClientService, CompanyService companyService, Bot bot, OneTimeNotification oneTimeNotification)
         {
             _appSettings = appSettings;
             _caseMgmtService = caseMgmtService;
@@ -41,6 +42,7 @@ namespace TicketBOT.Controllers
             _fbApiClientService = fbApiClientService;
             _companyService = companyService;
             _bot = bot;
+            _oneTimeNotifAgent = oneTimeNotification;
         }
 
         #region GET --> Verify Token / Secret
@@ -73,7 +75,7 @@ namespace TicketBOT.Controllers
                 var signature = Request.Headers["X-Hub-Signature"].FirstOrDefault().Replace("sha1=", "");
                 string body = await new StreamReader(Request.Body).ReadToEndAsync();
 
-                if (!VerifySignature(signature, body))
+                if (!FacebookChatbotHelper.VerifySignature(_appSettings, signature, body))
                     return BadRequest();
 
                 var value = JsonConvert.DeserializeObject<FacebookMessage>(body);
@@ -91,7 +93,12 @@ namespace TicketBOT.Controllers
                     {
                         foreach (var msgItem in entry.messaging)
                         {
-                            if (msgItem.message == null && msgItem.postback == null) { continue; }
+                            if (msgItem.message == null && msgItem.postback == null) 
+                            {
+                                if (!FacebookChatbotHelper.VerifyIsOneTimeNotifPayload(msgItem)) { continue; }
+
+                                await _oneTimeNotifAgent.UserOptinCaseNoification(msgItem, company);
+                            }
                             else
                             {
                                 // Dispatch bot agent
@@ -112,21 +119,6 @@ namespace TicketBOT.Controllers
                 LoggingHelper.LogError(ex, _logger, this.Request, this.RouteData);
                 return Ok();
             }
-        }
-        #endregion
-
-        #region Verify Signature
-        private bool VerifySignature(string signature, string body)
-        {
-            var hashString = new StringBuilder();
-            using (var crypto = new HMACSHA1(Encoding.UTF8.GetBytes(_appSettings.FacebookApp.AppSecret)))
-            {
-                var hash = crypto.ComputeHash(Encoding.UTF8.GetBytes(body));
-                foreach (var item in hash)
-                    hashString.Append(item.ToString("X2"));
-            }
-
-            return hashString.ToString().ToLower() == signature.ToLower();
         }
         #endregion
     }
