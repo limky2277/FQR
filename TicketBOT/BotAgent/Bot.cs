@@ -147,12 +147,21 @@ namespace TicketBOT.BotAgent
             string jiraSummary = conversationList.FirstOrDefault(x => x.LastQuestionAsked == (int)Question.IssueApplicationName).AnswerFreeText;
             string jiraDescription = conversationList.FirstOrDefault(x => x.LastQuestionAsked == (int)Question.IssueDescription).AnswerFreeText;
 
+            // Search clients databases
+            var clientList = _clientService.Get();
+
             // Jira integration here
 
             // Create Jira case
+            List<TicketSysUser> ticketSysUserList = _jiraUserMgmtService.Get();
+            var ticketSysUser = ticketSysUserList.Where(x => x.UserFbId == _senderInfo.senderConversationId).FirstOrDefault();
+
+            var clientCompany = _clientService.GetById(ticketSysUser.ClientCompanyId);
+
+            CaseDetail caseDetailResult = await _caseMgmtService.CreateCaseAsync(_company, clientCompany, $"{jiraSummary} [Create from FB ChatBot]", $"{jiraDescription}\n\n[Sent from FB ChatBot]");
 
             // If Jira case successfully created, inform user with case number
-            await ConstructAndSendMessage(ConstructType.TicketCreated);
+            await ConstructAndSendMessage(ConstructType.TicketCreated, caseDetailResult);
 
         }
         #endregion
@@ -211,32 +220,47 @@ namespace TicketBOT.BotAgent
         {
             switch (conversation.LastQuestionAsked)
             {
-                case (int)Question.Company:
+                case (int)Question.CompanyName:
                     // Validate message (reported issue) e.g. min length
                     if (!string.IsNullOrEmpty(answer))
                     {
+                        // Search company from Jira (Get company code)
+                        var clientResultList = await _caseMgmtService.GetClientCompanies(_company, answer);
+
                         // Search clients databases
-                        var clientList = _clientService.Get();
-                        var clientResult = clientList.Where(x => x.ClientCompanyName.ToLower() == answer.ToLower()).FirstOrDefault();
+                        // var clientList = _clientService.Get();
+                        // var clientResult = clientList.Where(x => x.ClientCompanyName.ToLower() == answer.ToLower()).FirstOrDefault();
 
-                        if (clientResult != null)
+                        if (clientResultList.Count == 1)
                         {
-                            conversation.Answered = true;
-                            conversation.AnswerFreeText = clientResult.Id.ToString();
-                            conversation.CreatedOn = DateTime.Now;
-                            _conversationService.UpsertActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}", conversation);
+                            var clientResult = clientResultList.FirstOrDefault();
 
-                            // Ask for verification code
-                            await ConstructAndSendMessage(ConstructType.RequestVerificationCode);
+                            if (clientResult.ClientCompanyName.ToLower().Equals(answer.ToLower()))
+                            {
+                                // Insert into TicketSysUser and Active = false
+                                var createdClientCompany = _clientService.Create(clientResult);
+
+                                conversation.Answered = true;
+                                conversation.AnswerFreeText = createdClientCompany.Id.ToString();
+                                conversation.CreatedOn = DateTime.Now;
+                                _conversationService.UpsertActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}", conversation);
+
+                                // Ask for verification code
+                                await ConstructAndSendMessage(ConstructType.RequestVerificationCode);
+                                break;
+                            }
                         }
-                        else
+                        conversation.CreatedOn = DateTime.Now;
+                        _conversationService.UpsertActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}", conversation);
+
+                        var comNotFoundMsg = JObject.FromObject(new
                         {
-                            conversation.CreatedOn = DateTime.Now;
-                            _conversationService.UpsertActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}", conversation);
+                            recipient = new { id = _senderInfo.senderConversationId },
+                            message = new { text = $"I'm sorry, we can't find your company in our system. Please enter the correct name or you may also contact {_company.contactEmail} for the company name." }
+                        });
 
-                            // Invalid input / no company found, please try again
-                            await ConstructAndSendMessage(ConstructType.Retry);
-                        }
+                        // Invalid input / no company found, please try again
+                        await ConstructAndSendMessage(ConstructType.Retry, null, comNotFoundMsg);
                     }
                     else
                     {
@@ -255,7 +279,7 @@ namespace TicketBOT.BotAgent
                         List<ConversationData> qaConv = _conversationService.GetConversationList($"{_senderInfo.senderConversationId}~{_company.FbPageId}");
                         if (qaConv != null)
                         {
-                            ConversationData verifyConv = qaConv.Where(x => x.LastQuestionAsked == (int)Question.Company).FirstOrDefault();
+                            ConversationData verifyConv = qaConv.Where(x => x.LastQuestionAsked == (int)Question.CompanyName).FirstOrDefault();
 
                             // Check verification code
                             var clientList = _clientService.Get();
@@ -263,6 +287,13 @@ namespace TicketBOT.BotAgent
 
                             if (clientResult != null)
                             {
+                                // Check & Update ClientCompany to true
+                                if (!clientResult.Active)
+                                {
+                                    clientResult.Active = true;
+                                    _clientService.Update(clientResult.Id, clientResult);
+                                }
+
                                 // Register user
                                 TicketSysUser user = new TicketSysUser { UserFbId = _senderInfo.id, ClientCompanyId = clientResult.Id, CompanyId = _company.Id, UserNickname = $"{_senderInfo.last_name} {_senderInfo.first_name}" };
 
@@ -330,10 +361,8 @@ namespace TicketBOT.BotAgent
                         string jiraSummary = conversationList.FirstOrDefault(x => x.LastQuestionAsked == (int)Question.IssueApplicationName).AnswerFreeText;
                         string jiraDescription = conversationList.FirstOrDefault(x => x.LastQuestionAsked == (int)Question.IssueDescription).AnswerFreeText;
 
-                        string ticketSummaryMessage = $"Subject: {jiraSummary}\n\nDescription: {jiraDescription}";
-
                         // Show case summary & ask for creation confirmation
-                        await ConstructAndSendMessage(ConstructType.TicketCreationConfirmation, null, ticketSummaryMessage);
+                        await ConstructAndSendMessage(ConstructType.TicketCreationConfirmation, new CaseDetail { Subject = jiraSummary, Detail = jiraDescription });
                     }
                     else
                     {
@@ -403,10 +432,14 @@ namespace TicketBOT.BotAgent
         /// <param name="text">text</param>
         /// <param name="sender">sender id</param>
         /// <returns>json</returns>
-        private async Task<List<JObject>> ConstructAndSendMessage(ConstructType type, CaseDetail caseDetailResult = null, string ticketSummaryMessage = null)
+        private async Task<List<JObject>> ConstructAndSendMessage(ConstructType type, CaseDetail caseDetailResult = null, JObject additionalMessage = null)
         {
             // To-do: consider to convert to JSON 
             List<JObject> messageList = new List<JObject>();
+            if (additionalMessage != null)
+            {
+                messageList.Add(additionalMessage);
+            }
 
             switch (type)
             {
@@ -466,15 +499,15 @@ namespace TicketBOT.BotAgent
                     messageList.Add(JObject.FromObject(new
                     {
                         recipient = new { id = _senderInfo.senderConversationId },
-                        message = new { text = $"Summary:\n\n{ticketSummaryMessage} \n\nAre you sure you want to submit?", quick_replies = createCaseConfirmationOption }
-                    }));;
+                        message = new { text = $"Summary:\n\nSubject: {caseDetailResult.Subject} \n\nDescription: {caseDetailResult.Detail} \n\nAre you sure you want to submit?", quick_replies = createCaseConfirmationOption }
+                    })); ;
                     _conversationService.UpsertActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}", new ConversationData { LastQuestionAsked = (int)Question.IssueDescription, Answered = true });
                     break;
                 case ConstructType.TicketCreated:
                     messageList.Add(JObject.FromObject(new
                     {
                         recipient = new { id = _senderInfo.senderConversationId },
-                        message = new { text = $"All done! Your case has been logged. Please quote [case_num] to follow up." }
+                        message = new { text = $"All done! Your case has been logged. Please quote {caseDetailResult.CaseKey} to follow up." }
                     }));
                     messageList.Add(JObject.FromObject(new
                     {
@@ -510,7 +543,7 @@ namespace TicketBOT.BotAgent
                         recipient = new { id = _senderInfo.senderConversationId },
                         message = new { text = $"Before we get started, I wanna know one thing. Can you tell me your company name please?" }
                     }));
-                    _conversationService.UpsertActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}", new ConversationData { LastQuestionAsked = (int)Question.Company, Answered = false });
+                    _conversationService.UpsertActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}", new ConversationData { LastQuestionAsked = (int)Question.CompanyName, Answered = false });
                     break;
                 case ConstructType.RequestVerificationCode:
                     messageList.Add(JObject.FromObject(new

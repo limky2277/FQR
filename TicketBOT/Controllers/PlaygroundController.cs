@@ -50,11 +50,11 @@ namespace TicketBOT.Controllers
             try
             {
                 // Seed Data
-                //var companyResult = _companyService.Create(new Company { CompanyName = "ABC Company", FbPageId = "102327571503111", FbPageToken = "EAADcf5Tn8Q0BAKTEkzXUkwgMDSEFKjwuZA2FXKDlFKdAPyHgj1qxZAsZC5OZApEiQE7K5ljqxfkLTtJXrU4WmIfar2fzKRrZAw3UZAN8LNYitIAZBZCMIL4Wzu0ysA6scT6gWjzfQa1dDZBv5RRAynEHVL4O9WZAUUDh1M2vL41kSp0vYNFokJ4Bomax48KC3Gf6wZD" });
+                // var companyResult = _companyService.Create(new Company { CompanyName = "Sabre", FbPageId = "102327571503111", FbPageToken = "EAADcf5Tn8Q0BAA6DdKIRm8vQ1TuZCJA93pA893nGyZAabOsyNPJl7psqiEBZBtrrV318UBjecemc2quU3OkMQH8YGV6tR12tvZBMUzWaLuDWoell68ZB5YB0cWuvq0Phh5vFyS6av3vLqZCRR69Bdjhye05Ofs5zaI3sgfasd1Ukfkeg6LPbmuvBKtiGldx7kZD", TicketSysUrl= "http://58.185.112.2:8550", TicketSysId = "developer@sabreinfo.com.sg", TicketSysPassword = "DevS@b3r", contactEmail = "support@xyz.com" });
 
                 //if (companyResult != null)
                 //{
-                //    var clientCompanyResult = _clientCompanyService.Create(new ClientCompany { ClientCompanyName = "XYZ Client", TicketSysCompanyCode = "109", VerificationEmail = "abc@xyz.com", VerificationCode = "123456" });
+                //    var clientCompanyResult = _clientCompanyService.Create(new ClientCompany { ClientCompanyName = "ZZTEST", TicketSysCompanyCode = "124", VerificationEmail = "abc@xyz.com", VerificationCode = "123456" });
                 //    // _jiraUserMgmtService.Create(new JiraUser { UserFbId = "3058942664196267", CompanyId = companyResult.Id, ClientCompanyId = clientCompanyResult.Id, UserNickname = "abc nickname" });
                 //}
 

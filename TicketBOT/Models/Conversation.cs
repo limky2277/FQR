@@ -6,7 +6,7 @@ namespace TicketBOT.Models
     public enum Question
     {
         None, // last action / not involve any question.
-        Company,
+        CompanyName,
         Application,
         IssueApplicationName,
         IssueDescription,
