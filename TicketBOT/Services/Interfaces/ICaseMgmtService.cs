@@ -7,7 +7,7 @@ namespace TicketBOT.Services.Interfaces
 {
     public interface ICaseMgmtService
     {
-        Task<List<ClientCompany>> GetCompanyCodes(Company company, string clientCompanyName);
+        Task<List<ClientCompany>> GetClientCompanies(Company company, string clientCompanyName);
         Task<CaseDetail> GetCaseStatusAsync(Company company, string TicketSysCompanyCode, string CaseId);
         Task<CaseDetail> CreateCaseAsync(Company company, ClientCompany clientCompany, string CaseSubject, string CaseDescription);
     }

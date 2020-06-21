@@ -111,7 +111,7 @@ namespace TicketBOT.Controllers
                 TicketSysPassword = "DevS@b3r"
             };
 
-            return Ok(_caseMgmtService.GetCompanyCodes(c, clientCompanyName).Result);
+            return Ok(_caseMgmtService.GetClientCompanies(c, clientCompanyName).Result);
         }
     }
 }

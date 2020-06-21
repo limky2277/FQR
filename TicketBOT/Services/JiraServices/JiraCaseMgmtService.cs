@@ -160,7 +160,7 @@ namespace TicketBOT.Services.JiraServices
             };
         }
 
-        public async Task<List<ClientCompany>> GetCompanyCodes(Company company, string clientCompanyName)
+        public async Task<List<ClientCompany>> GetClientCompanies(Company company, string clientCompanyName)
         {
             HttpResponseMessage resp = null;
             try
@@ -207,7 +207,7 @@ namespace TicketBOT.Services.JiraServices
                                                             {
                                                                 ClientCompanyName = srvDsk.projectName,
                                                                 TicketSysCompanyCode = srvDsk.id,
-                                                                VerificationCode = generator.Next(0, 9999).ToString("D4"),
+                                                                VerificationCode = "2376",//generator.Next(0, 9999).ToString("D4"),
                                                                 Active = false, //ONLY IF THEY ENTER CORRECT OTP, WE activate
                                                                 CreatedOn = DateTime.Now,
                                                                 VerificationEmail = company.contactEmail //currently using conpanys contact. user should call and get OTP from company
