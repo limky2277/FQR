@@ -1,15 +1,20 @@
+using Hangfire;
+using Hangfire.MemoryStorage;
 using log4net;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
-using TicketBOT.BotAgent;
+using System;
+using TicketBOT.Core.Helpers;
 using TicketBOT.Core.Models;
 using TicketBOT.Core.Services.Interfaces;
+using TicketBOT.Helpers;
 using TicketBOT.JIRA.Services;
-using TicketBOT.Middleware;
+using TicketBOT.Services.BotServices;
 using TicketBOT.Services.DBServices;
 using TicketBOT.Services.FacebookServices;
 using TicketBOT.Services.Interfaces;
@@ -26,6 +31,7 @@ namespace TicketBOT
         }
 
         public IConfiguration Configuration { get; }
+        public ApplicationSettings applicationSettings;
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
@@ -36,14 +42,14 @@ namespace TicketBOT
             services.AddSingleton<TicketSysUserMgmtService>();
             services.AddSingleton<CompanyService>();
             services.AddSingleton<ClientCompanyService>();
-            services.AddScoped<Bot>();
-            services.AddScoped<OneTimeNotification>();
+            services.AddScoped<BotService>();
+            services.AddScoped<OneTimeNotificationService>();
             //services.AddScoped<ISenderCacheService, SenderCacheService>();
             services.AddScoped<IConversationService, ConversationService>();
             services.AddScoped<UserCaseNotifService>();
 
             // Register AppSettings
-            ApplicationSettings applicationSettings = new ApplicationSettings();
+            applicationSettings = new ApplicationSettings();
             Configuration.GetSection(nameof(ApplicationSettings)).Bind(applicationSettings);
             services.AddSingleton(applicationSettings);
 
@@ -52,9 +58,6 @@ namespace TicketBOT
 
             //Register JIRA case management service
             services.AddSingleton<ICaseMgmtService, JiraCaseMgmtService>();
-           
-            // Register API Logging middleware
-            services.AddTransient<ApiLoggingMiddleware>();
 
             // Register Swagger
             services.AddMvc();
@@ -63,13 +66,13 @@ namespace TicketBOT
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "My API", Version = "v1" });
             });
+
+            services.AddHangfire(c => c.UseMemoryStorage());
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            // Middleware Extension
-            app.UseFactoryBasedLoggingMiddleware();
 
             if (env.IsDevelopment())
             {
@@ -87,13 +90,21 @@ namespace TicketBOT
             app.UseSwaggerUI(c =>
             {
                 string swaggerJsonBasePath = string.IsNullOrWhiteSpace(c.RoutePrefix) ? "." : "..";
-                c.SwaggerEndpoint($"{swaggerJsonBasePath}/swagger/v1/swagger.json", "My API V1");                
+                c.SwaggerEndpoint($"{swaggerJsonBasePath}/swagger/v1/swagger.json", "My API V1");
             });
 
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
             });
+
+
+            app.UseHangfireServer();
+            var notifSett = applicationSettings.NotificationSettings;
+            // Recurring job to blast notification
+            // Call notification endpoint periodically
+            // Notification URL & interval are configured in appsettings
+            RecurringJob.AddOrUpdate(() => RestApiHelper.GetAsync(string.Format(notifSett.NotificationApiPath)), $"*/{notifSett.RefreshIntervalMins} * * * *");
 
             _logger.Info("[TicketBOT] Ticket Bot Service (Started)");
         }

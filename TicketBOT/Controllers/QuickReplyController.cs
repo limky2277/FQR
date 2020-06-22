@@ -5,7 +5,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using TicketBOT.BotAgent;
+using TicketBOT.Services.BotServices;
 using TicketBOT.Core.Models;
 using TicketBOT.Core.Services.Interfaces;
 using TicketBOT.Helpers;
@@ -26,20 +26,20 @@ namespace TicketBOT.Controllers
         private readonly IFbApiClientService _fbApiClientService;
         private readonly TicketSysUserMgmtService _jiraUserMgmtService;
         private readonly CompanyService _companyService;
-        private readonly Bot _bot;
-        private readonly OneTimeNotification _oneTimeNotifAgent;
+        private readonly BotService _botService;
+        private readonly OneTimeNotificationService _oneTimeNotifService;
 
         public QuickReplyController(ApplicationSettings appSettings, ICaseMgmtService caseMgmtService,
             TicketSysUserMgmtService jiraUserMgmtService,
-            IFbApiClientService fbApiClientService, CompanyService companyService, Bot bot, OneTimeNotification oneTimeNotification)
+            IFbApiClientService fbApiClientService, CompanyService companyService, BotService botService, OneTimeNotificationService oneTimeNotifService)
         {
             _appSettings = appSettings;
             _caseMgmtService = caseMgmtService;
             _jiraUserMgmtService = jiraUserMgmtService;
             _fbApiClientService = fbApiClientService;
             _companyService = companyService;
-            _bot = bot;
-            _oneTimeNotifAgent = oneTimeNotification;
+            _botService = botService;
+            _oneTimeNotifService = oneTimeNotifService;
         }
 
         #region GET --> Verify Token / Secret
@@ -94,12 +94,12 @@ namespace TicketBOT.Controllers
                             {
                                 if (!FacebookChatbotHelper.VerifyIsOneTimeNotifPayload(msgItem)) { continue; }
 
-                                await _oneTimeNotifAgent.UserOptinCaseNoification(msgItem, company);
+                                await _oneTimeNotifService.UserOptinCaseNoification(msgItem, company);
                             }
                             else
                             {
                                 // Dispatch bot agent
-                                await _bot.DispatchAgent(msgItem, company);
+                                await _botService.DispatchAgent(msgItem, company);
                             }
                         }
                     }
