@@ -1,25 +1,22 @@
 ﻿using log4net;
-using Microsoft.AspNetCore.Mvc.Filters;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Dynamic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
-using TicketBOT.Helpers;
-using TicketBOT.Models;
-using TicketBOT.Models.JIRA;
-using TicketBOT.Services.Interfaces;
+using TicketBOT.Core.Helpers;
+using TicketBOT.Core.Models;
+using TicketBOT.Core.Services.Interfaces;
+using TicketBOT.JIRA.Models;
 
-namespace TicketBOT.Services.JiraServices
+namespace TicketBOT.JIRA.Services
 {
     public class JiraCaseMgmtService : ICaseMgmtService
-    {        
-        public ApplicationSettings _appSettings { get; set; }
-        public string _Auth { get; set; }
+    {
+        private ApplicationSettings _appSettings { get; set; }
         private static readonly ILog _logger = LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
         public JiraCaseMgmtService(ApplicationSettings appSettings)
@@ -27,12 +24,20 @@ namespace TicketBOT.Services.JiraServices
             _appSettings = appSettings;
         }
 
-        public async Task<Models.CaseDetail> CreateCaseAsync(Company company, ClientCompany clientCompany, string CaseSubject, string CaseDescription)
+        /// <summary>
+        /// Used to create a new case in JIRA
+        /// </summary>
+        /// <param name="company"></param>
+        /// <param name="clientCompany"></param>
+        /// <param name="CaseSubject"></param>
+        /// <param name="CaseDescription"></param>
+        /// <returns></returns>
+        public async Task<CaseDetail> CreateCaseAsync(Company company, ClientCompany clientCompany, string CaseSubject, string CaseDescription)
         {
             HttpResponseMessage resp = null;
             try
             {
-                Models.CaseDetail caseDetail = new Models.CaseDetail();
+                CaseDetail caseDetail = new CaseDetail();
                 if (company == null)
                     throw new ArgumentException($"Company details should not be empty", "Company");
                 if (string.IsNullOrWhiteSpace(CaseSubject))
@@ -45,12 +50,12 @@ namespace TicketBOT.Services.JiraServices
                 {
                     serviceDeskId = clientCompany.TicketSysCompanyCode,
                     requestTypeId = "1240",
-                    requestFieldValues = new RequestFieldValues() { 
-                        summary = CaseSubject, 
+                    requestFieldValues = new RequestFieldValues() {
+                        summary = CaseSubject,
                         description = CaseDescription,
                         duedate = DateTime.Now.AddDays(7).ToString("yyyy-MM-dd")
                     },
-                       
+
                 };
 
                 JIRAReq.Content = new StringContent(
@@ -60,9 +65,9 @@ namespace TicketBOT.Services.JiraServices
 
                 resp = await RestApiHelper.SendAsync(JIRAReq);
                 resp.EnsureSuccessStatusCode();
-                var caseInfo = JsonConvert.DeserializeObject<Models.JIRA.JIRACaseDetail>(await resp.Content.ReadAsStringAsync());
+                var caseInfo = JsonConvert.DeserializeObject<JIRACaseDetail>(await resp.Content.ReadAsStringAsync());
 
-                caseDetail = new Models.CaseDetail()
+                caseDetail = new CaseDetail()
                 {
                     CaseID = caseInfo.issueId,
                     CaseKey = caseInfo.issueKey,
@@ -80,7 +85,7 @@ namespace TicketBOT.Services.JiraServices
                 _logger.Error(ex);
                 string APIError = "<EMPTY>";
                 if (resp != null)
-                { 
+                {
                     var error = JsonConvert.DeserializeObject<Error>(await resp.Content.ReadAsStringAsync());
                     if (error != null)
                         APIError = error.errorMessage;
@@ -91,12 +96,19 @@ namespace TicketBOT.Services.JiraServices
 
         }
 
-        public async Task<Models.CaseDetail> GetCaseStatusAsync(Company company, string TicketSysCompanyCode, string CaseId)
+        /// <summary>
+        /// Used to get the case status from JIRA
+        /// </summary>
+        /// <param name="company"></param>
+        /// <param name="TicketSysCompanyCode"></param>
+        /// <param name="CaseId"></param>
+        /// <returns></returns>
+        public async Task<CaseDetail> GetCaseStatusAsync(Company company, string TicketSysCompanyCode, string CaseId)
         {
             HttpResponseMessage resp = null;
             try
             {
-                Models.CaseDetail caseDetail = new Models.CaseDetail();
+                CaseDetail caseDetail = new CaseDetail();
                 if (string.IsNullOrWhiteSpace(TicketSysCompanyCode))
                     throw new ArgumentException($"Please enter correct company code", "TicketSysCompanyCode");
                 if (string.IsNullOrWhiteSpace(CaseId))
@@ -108,12 +120,12 @@ namespace TicketBOT.Services.JiraServices
 
                 resp = await RestApiHelper.SendAsync(JIRAReq);
                 resp.EnsureSuccessStatusCode();
-                var caseInfo = JsonConvert.DeserializeObject<Models.JIRA.JIRACaseDetail>(await resp.Content.ReadAsStringAsync());
+                var caseInfo = JsonConvert.DeserializeObject<JIRACaseDetail>(await resp.Content.ReadAsStringAsync());
 
                 if (!caseInfo.serviceDeskId.ToString().Equals(TicketSysCompanyCode))
                     throw new ArgumentException($"This case ID {caseInfo.issueKey} doesnt link to your service desk. Please try again", "CaseId");
 
-                caseDetail = new Models.CaseDetail()
+                caseDetail = new CaseDetail()
                 {
                     CaseID = caseInfo.issueId,
                     CaseKey = caseInfo.issueKey,
@@ -160,6 +172,12 @@ namespace TicketBOT.Services.JiraServices
             };
         }
 
+        /// <summary>
+        /// Used to read the client companies like clientCompanyName
+        /// </summary>
+        /// <param name="company"></param>
+        /// <param name="clientCompanyName"></param>
+        /// <returns></returns>
         public async Task<List<ClientCompany>> GetClientCompanies(Company company, string clientCompanyName)
         {
             HttpResponseMessage resp = null;

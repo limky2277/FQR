@@ -3,25 +3,25 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using TicketBOT.Core.Models;
 using TicketBOT.Helpers;
-using TicketBOT.Models;
 using TicketBOT.Models.Facebook;
+using TicketBOT.Services.DBServices;
 using TicketBOT.Services.Interfaces;
-using TicketBOT.Services.JiraServices;
 
-namespace TicketBOT.BotAgent
+namespace TicketBOT.Services.BotServices
 {
-    public class OneTimeNotification
+    public class OneTimeNotificationService
     {
         private static readonly ILog _logger = LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
-        private readonly JiraUserMgmtService _jiraUserMgmtService;
+        private readonly TicketSysUserMgmtService _jiraUserMgmtService;
         private Company _company;
         private readonly UserCaseNotifService _userCaseNotifService;
         private readonly IFbApiClientService _fbApiClientService;
 
 
-        public OneTimeNotification(JiraUserMgmtService jiraUserMgmtService, UserCaseNotifService userCaseNotifService, IFbApiClientService fbApiClientService)
+        public OneTimeNotificationService(TicketSysUserMgmtService jiraUserMgmtService, UserCaseNotifService userCaseNotifService, IFbApiClientService fbApiClientService)
         {
             _jiraUserMgmtService = jiraUserMgmtService;
             _userCaseNotifService = userCaseNotifService;

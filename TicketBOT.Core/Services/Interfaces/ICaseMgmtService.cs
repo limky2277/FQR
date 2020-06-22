@@ -1,9 +1,9 @@
 ﻿
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using TicketBOT.Models;
+using TicketBOT.Core.Models;
 
-namespace TicketBOT.Services.Interfaces
+namespace TicketBOT.Core.Services.Interfaces
 {
     public interface ICaseMgmtService
     {

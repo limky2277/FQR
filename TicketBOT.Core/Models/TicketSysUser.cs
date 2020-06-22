@@ -1,17 +1,17 @@
 ﻿using MongoDB.Bson.Serialization.Attributes;
 using System;
 
-namespace TicketBOT.Models
+namespace TicketBOT.Core.Models
 {
-    public class ClientCompany
+    public class TicketSysUser
     {
         [BsonId]
         //[BsonRepresentation(BsonType.ObjectId)]
         public Guid Id { get; set; } = Guid.NewGuid();
-        public string ClientCompanyName { get; set; }
-        public string TicketSysCompanyCode { get; set; }
-        public string VerificationEmail { get; set; }
-        public string VerificationCode { get; set; }
+        public string UserFbId { get; set; }
+        public Guid ClientCompanyId { get; set; }
+        public Guid CompanyId { get; set; }
+        public string UserNickname { get; set; }
         public DateTime CreatedOn { get; set; } = DateTime.Now;
         public bool Active { get; set; } = true;
     }

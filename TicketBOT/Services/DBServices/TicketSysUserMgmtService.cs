@@ -1,17 +1,17 @@
 ﻿using MongoDB.Driver;
 using System;
 using System.Collections.Generic;
-using TicketBOT.Models;
+using TicketBOT.Core.Models;
 using TicketBOT.Services.Interfaces;
 
-namespace TicketBOT.Services.JiraServices
+namespace TicketBOT.Services.DBServices
 {
-    public class JiraUserMgmtService : IGenericService<TicketSysUser>, IUserMgmtService
+    public class TicketSysUserMgmtService : IGenericService<TicketSysUser>, IUserMgmtService
     {
         private readonly ApplicationSettings _appSettings;
         private readonly IMongoCollection<TicketSysUser> _user;
 
-        public JiraUserMgmtService(ApplicationSettings appSettings)
+        public TicketSysUserMgmtService(ApplicationSettings appSettings)
         {
             _appSettings = appSettings;
             var client = new MongoClient(_appSettings.TicketBOTDb.ConnectionString);

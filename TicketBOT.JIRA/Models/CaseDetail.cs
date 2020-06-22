@@ -1,12 +1,8 @@
 ﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Threading.Tasks;
 
-namespace TicketBOT.Models.JIRA
+namespace TicketBOT.JIRA.Models
 {
     public class JiraServiceDeskStatus
     {

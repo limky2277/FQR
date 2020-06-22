@@ -4,8 +4,8 @@ using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
-using TicketBOT.Helpers;
-using TicketBOT.Models;
+using TicketBOT.Core.Helpers;
+using TicketBOT.Core.Models;
 using TicketBOT.Models.Facebook;
 using TicketBOT.Services.Interfaces;
 

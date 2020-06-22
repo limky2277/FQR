@@ -1,14 +1,12 @@
 ﻿using log4net;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.VisualBasic;
 using Newtonsoft.Json.Linq;
 using System;
-using System.Threading.Tasks;
+using TicketBOT.Core.Models;
+using TicketBOT.Core.Services.Interfaces;
 using TicketBOT.Helpers;
-using TicketBOT.Models;
-using TicketBOT.Models.Facebook;
+using TicketBOT.Services.DBServices;
 using TicketBOT.Services.Interfaces;
-using TicketBOT.Services.JiraServices;
 
 namespace TicketBOT.Controllers
 {
@@ -24,13 +22,13 @@ namespace TicketBOT.Controllers
         private readonly ApplicationSettings _appSettings;
         private readonly ICaseMgmtService _caseMgmtService;
         private readonly IFbApiClientService _fbApiClientService;
-        private readonly JiraUserMgmtService _jiraUserMgmtService;
+        private readonly TicketSysUserMgmtService _jiraUserMgmtService;
         private readonly CompanyService _companyService;
         private readonly ClientCompanyService _clientCompanyService;
 
         private IConversationService _conversationService;
 
-        public PlaygroundController(ApplicationSettings appSettings, ICaseMgmtService caseMgmtService, JiraUserMgmtService jiraUserMgmtService,
+        public PlaygroundController(ApplicationSettings appSettings, ICaseMgmtService caseMgmtService, TicketSysUserMgmtService jiraUserMgmtService,
             IFbApiClientService fbApiClientService, CompanyService companyService,
             ClientCompanyService clientCompanyService,
             IConversationService conversationService)

@@ -1,6 +1,6 @@
 ﻿
 using System;
-using TicketBOT.Models;
+using TicketBOT.Core.Models;
 
 namespace TicketBOT.Services.Interfaces
 {

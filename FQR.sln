@@ -5,6 +5,10 @@ VisualStudioVersion = 16.0.29613.14
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TicketBOT", "TicketBOT\TicketBOT.csproj", "{42BEB2B4-A6DE-453D-B106-F84E11829B4D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TicketBOT.Core", "TicketBOT.Core\TicketBOT.Core.csproj", "{E8B61E03-EB98-40BE-90FA-A710A40E6FF0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TicketBOT.JIRA", "TicketBOT.JIRA\TicketBOT.JIRA.csproj", "{035E0451-6F5B-444A-ABDC-5326C15F2A24}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +19,14 @@ Global
 		{42BEB2B4-A6DE-453D-B106-F84E11829B4D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{42BEB2B4-A6DE-453D-B106-F84E11829B4D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{42BEB2B4-A6DE-453D-B106-F84E11829B4D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E8B61E03-EB98-40BE-90FA-A710A40E6FF0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E8B61E03-EB98-40BE-90FA-A710A40E6FF0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E8B61E03-EB98-40BE-90FA-A710A40E6FF0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E8B61E03-EB98-40BE-90FA-A710A40E6FF0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{035E0451-6F5B-444A-ABDC-5326C15F2A24}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{035E0451-6F5B-444A-ABDC-5326C15F2A24}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{035E0451-6F5B-444A-ABDC-5326C15F2A24}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{035E0451-6F5B-444A-ABDC-5326C15F2A24}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

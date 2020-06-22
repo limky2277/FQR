@@ -1,17 +1,18 @@
-using System.Net.Http.Headers;
+using log4net;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.OpenApi.Models;
 using TicketBOT.BotAgent;
-using TicketBOT.Models;
+using TicketBOT.Core.Models;
+using TicketBOT.Core.Services.Interfaces;
+using TicketBOT.JIRA.Services;
+using TicketBOT.Middleware;
+using TicketBOT.Services.DBServices;
 using TicketBOT.Services.FacebookServices;
 using TicketBOT.Services.Interfaces;
-using TicketBOT.Services.JiraServices;
-using TicketBOT.Middleware;
-using log4net;
-using Microsoft.OpenApi.Models;
 
 namespace TicketBOT
 {
@@ -32,7 +33,7 @@ namespace TicketBOT
             services.AddControllers();
 
             // Register DI
-            services.AddSingleton<JiraUserMgmtService>();
+            services.AddSingleton<TicketSysUserMgmtService>();
             services.AddSingleton<CompanyService>();
             services.AddSingleton<ClientCompanyService>();
             services.AddScoped<Bot>();
