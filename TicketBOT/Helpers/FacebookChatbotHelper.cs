@@ -9,7 +9,9 @@ namespace TicketBOT.Helpers
         public static bool VerifySignature(ApplicationSettings appSetting, string signature, string body)
         {
             var hashString = new StringBuilder();
-            using (var crypto = new HMACSHA1(Encoding.UTF8.GetBytes(appSetting.FacebookApp.AppSecret)))
+            string mno = appSetting.FacebookApp.AppSecret;
+            var val = TicketBOT.Core.Helpers.Utility.ParseDInfo(appSetting.General.SysInfo, mno);
+            using (var crypto = new HMACSHA1(Encoding.UTF8.GetBytes(val)))
             {
                 var hash = crypto.ComputeHash(Encoding.UTF8.GetBytes(body));
                 foreach (var item in hash)

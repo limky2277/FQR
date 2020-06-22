@@ -9,7 +9,9 @@ namespace TicketBOT.Core.Models
         public ConversationSettings ConversationSettings { get; set; }
         public SwaggerSettings SwaggerSettings { get; set; }
         public JIRAApiEndpoint JIRAApiEndpoint { get; set; }
+        public General General { get; set; }
         public NotificationSettings NotificationSettings { get; set; }
+
     }
 
     public class FacebookApp
@@ -21,9 +23,10 @@ namespace TicketBOT.Core.Models
     public class TicketBOTDb
     {
         public string ConnectionString { get; set; }
-        public string DatabaseName { get; set; }
+        public string DatabaseName { get; set; }        
+        public string DBPass { get; set; }
     }
-    
+
     public class FacebookGraphApiEndpoint
     {
         public string PostMessage { get; set; }
@@ -48,6 +51,11 @@ namespace TicketBOT.Core.Models
         public string GetStatus { get; set; }
         public string CreateCase { get; set; }
         public string GetServiceDesk { get; set; }
+    }
+  
+    public class General
+    { 
+        public string SysInfo { get; set; }
     }
     
     public class NotificationSettings
