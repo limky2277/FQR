@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using TicketBOT.Core.Helpers;
 using TicketBOT.Core.Models;
 using TicketBOT.Services.Interfaces;
 
@@ -15,7 +16,7 @@ namespace TicketBOT.Services.DBServices
         public ClientCompanyService(ApplicationSettings appSettings)
         {
             _appSettings = appSettings;
-            var client = new MongoClient(_appSettings.TicketBOTDb.ConnectionString);
+            var client = new MongoClient(DBHelper.getInfo(appSettings));
             var database = client.GetDatabase(_appSettings.TicketBOTDb.DatabaseName);
 
             _client = database.GetCollection<ClientCompany>(nameof(ClientCompany));
