@@ -5,11 +5,11 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using TicketBOT.BotAgent;
 using TicketBOT.Core.Models;
 using TicketBOT.Core.Services.Interfaces;
 using TicketBOT.Helpers;
 using TicketBOT.Models.Facebook;
+using TicketBOT.Services.BotServices;
 using TicketBOT.Services.DBServices;
 using TicketBOT.Services.Interfaces;
 
@@ -26,12 +26,12 @@ namespace TicketBOT.Controllers
         private readonly IFbApiClientService _fbApiClientService;
         private readonly TicketSysUserMgmtService _jiraUserMgmtService;
         private readonly CompanyService _companyService;
-        private readonly Bot _bot;
-        private readonly OneTimeNotification _oneTimeNotifAgent;
+        private readonly BotService _bot;
+        private readonly OneTimeNotificationService _oneTimeNotifAgent;
 
         public QuickReplyController(ApplicationSettings appSettings, ICaseMgmtService caseMgmtService,
             TicketSysUserMgmtService jiraUserMgmtService,
-            IFbApiClientService fbApiClientService, CompanyService companyService, Bot bot, OneTimeNotification oneTimeNotification)
+            IFbApiClientService fbApiClientService, CompanyService companyService, BotService bot, OneTimeNotificationService oneTimeNotification)
         {
             _appSettings = appSettings;
             _caseMgmtService = caseMgmtService;
