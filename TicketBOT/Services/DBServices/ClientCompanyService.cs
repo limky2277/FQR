@@ -2,10 +2,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using TicketBOT.Models;
+using TicketBOT.Core.Models;
 using TicketBOT.Services.Interfaces;
 
-namespace TicketBOT.Services.JiraServices
+namespace TicketBOT.Services.DBServices
 {
     public class ClientCompanyService : IGenericService<ClientCompany>
     {

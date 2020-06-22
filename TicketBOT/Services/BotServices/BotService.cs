@@ -4,23 +4,24 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using TicketBOT.Core.Models;
+using TicketBOT.Core.Services.Interfaces;
 using TicketBOT.Helpers;
-using TicketBOT.Models;
+using TicketBOT.JIRA.Models;
 using TicketBOT.Models.Facebook;
-using TicketBOT.Models.JIRA;
+using TicketBOT.Services.DBServices;
 using TicketBOT.Services.Interfaces;
-using TicketBOT.Services.JiraServices;
 using static TicketBOT.Models.Facebook.FacebookQuickReply;
 
-namespace TicketBOT.BotAgent
+namespace TicketBOT.Services.BotServices
 {
-    public class Bot
+    public class BotService
     {
         private static readonly ILog _logger = LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
         private readonly ICaseMgmtService _caseMgmtService;
         private readonly IFbApiClientService _fbApiClientService;
-        private readonly JiraUserMgmtService _jiraUserMgmtService;
+        private readonly TicketSysUserMgmtService _jiraUserMgmtService;
         private readonly CompanyService _companyService;
         private readonly ClientCompanyService _clientService;
         private readonly UserCaseNotifService _userCaseNotifService;
@@ -30,8 +31,8 @@ namespace TicketBOT.BotAgent
 
         private IConversationService _conversationService;
 
-        public Bot(ICaseMgmtService caseMgmtService,
-            JiraUserMgmtService jiraUserMgmtService, IFbApiClientService fbApiClientService,
+        public BotService(ICaseMgmtService caseMgmtService,
+            TicketSysUserMgmtService jiraUserMgmtService, IFbApiClientService fbApiClientService,
             CompanyService companyService, ClientCompanyService clientService,
             IConversationService conversationService, UserCaseNotifService userCaseNotifService)
         {

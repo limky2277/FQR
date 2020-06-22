@@ -1,11 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
-using System.Globalization;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
-
-namespace TicketBOT.Models.JIRA
+namespace TicketBOT.JIRA.Models
 {
     public class RequestFieldValues
     {

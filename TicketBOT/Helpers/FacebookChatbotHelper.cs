@@ -1,6 +1,6 @@
 ﻿using System.Security.Cryptography;
 using System.Text;
-using TicketBOT.Models;
+using TicketBOT.Core.Models;
 
 namespace TicketBOT.Helpers
 {

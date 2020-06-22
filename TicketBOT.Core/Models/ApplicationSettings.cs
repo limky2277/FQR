@@ -1,5 +1,5 @@
 ﻿
-namespace TicketBOT.Models
+namespace TicketBOT.Core.Models
 {
     public class ApplicationSettings
     {

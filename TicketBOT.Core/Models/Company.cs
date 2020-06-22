@@ -1,7 +1,7 @@
 ﻿using MongoDB.Bson.Serialization.Attributes;
 using System;
 
-namespace TicketBOT.Models
+namespace TicketBOT.Core.Models
 {
     public class Company
     {

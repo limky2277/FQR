@@ -29,6 +29,7 @@ namespace TicketBOT.Controllers
                 //IF NO, delete entry
 
             }
+            return Ok();
         }
     }
 }
