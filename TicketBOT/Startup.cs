@@ -36,8 +36,10 @@ namespace TicketBOT
             services.AddSingleton<CompanyService>();
             services.AddSingleton<ClientCompanyService>();
             services.AddScoped<Bot>();
+            services.AddScoped<OneTimeNotification>();
             //services.AddScoped<ISenderCacheService, SenderCacheService>();
             services.AddScoped<IConversationService, ConversationService>();
+            services.AddScoped<UserCaseNotifService>();
 
             // Register AppSettings
             ApplicationSettings applicationSettings = new ApplicationSettings();

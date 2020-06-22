@@ -1,6 +1,7 @@
 ﻿using MongoDB.Driver;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using TicketBOT.Models;
 using TicketBOT.Services.Interfaces;
 
@@ -38,7 +39,7 @@ namespace TicketBOT.Services.JiraServices
                 _client.InsertOne(client);
                 return client;
             }
-            return null;
+            return validate.FirstOrDefault();
         }
 
         public void Update(Guid id, ClientCompany company) =>

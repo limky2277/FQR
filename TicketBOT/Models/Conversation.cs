@@ -6,8 +6,10 @@ namespace TicketBOT.Models
     public enum Question
     {
         None, // last action / not involve any question.
-        Company,
-        Issue,
+        CompanyName,
+        Application,
+        IssueApplicationName,
+        IssueDescription,
         TicketCode,
         VerificationCode,
         Retry,
@@ -20,6 +22,8 @@ namespace TicketBOT.Models
         SearchCompany,
         RequestVerificationCode,
         CreateTicket,
+        TicketDescription,
+        TicketCreationConfirmation,
         TicketCreated,
         CheckTicket,
         TicketFound,

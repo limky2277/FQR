@@ -1,10 +1,12 @@
 ﻿using log4net;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.VisualBasic;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Threading.Tasks;
 using TicketBOT.Helpers;
 using TicketBOT.Models;
+using TicketBOT.Models.Facebook;
 using TicketBOT.Services.Interfaces;
 using TicketBOT.Services.JiraServices;
 
@@ -49,14 +51,48 @@ namespace TicketBOT.Controllers
         {
             try
             {
+                string tempToken = "EAADcf5Tn8Q0BAA6DdKIRm8vQ1TuZCJA93pA893nGyZAabOsyNPJl7psqiEBZBtrrV318UBjecemc2quU3OkMQH8YGV6tR12tvZBMUzWaLuDWoell68ZB5YB0cWuvq0Phh5vFyS6av3vLqZCRR69Bdjhye05Ofs5zaI3sgfasd1Ukfkeg6LPbmuvBKtiGldx7kZD";
                 // Seed Data
-                //var companyResult = _companyService.Create(new Company { CompanyName = "ABC Company", FbPageId = "102327571503111", FbPageToken = "EAADcf5Tn8Q0BAKTEkzXUkwgMDSEFKjwuZA2FXKDlFKdAPyHgj1qxZAsZC5OZApEiQE7K5ljqxfkLTtJXrU4WmIfar2fzKRrZAw3UZAN8LNYitIAZBZCMIL4Wzu0ysA6scT6gWjzfQa1dDZBv5RRAynEHVL4O9WZAUUDh1M2vL41kSp0vYNFokJ4Bomax48KC3Gf6wZD" });
+                //var companyResult = _companyService.Create(new Company { CompanyName = "Sabre", FbPageId = "102327571503111", FbPageToken = "EAADcf5Tn8Q0BAA6DdKIRm8vQ1TuZCJA93pA893nGyZAabOsyNPJl7psqiEBZBtrrV318UBjecemc2quU3OkMQH8YGV6tR12tvZBMUzWaLuDWoell68ZB5YB0cWuvq0Phh5vFyS6av3vLqZCRR69Bdjhye05Ofs5zaI3sgfasd1Ukfkeg6LPbmuvBKtiGldx7kZD", TicketSysUrl = "http://58.185.112.2:8550", TicketSysId = "developer@sabreinfo.com.sg", TicketSysPassword = "DevS@b3r", contactEmail = "support@xyz.com" });
 
                 //if (companyResult != null)
                 //{
-                //    var clientCompanyResult = _clientCompanyService.Create(new ClientCompany { ClientCompanyName = "XYZ Client", VerificationEmail = "abc@xyz.com", VerificationCode = "123456" });
-                //    // _jiraUserMgmtService.Create(new JiraUser { UserFbId = "3058942664196267", CompanyId = companyResult.Id, ClientCompanyId = clientCompanyResult.Id, UserNickname = "abc nickname" });
+                //    var clientCompanyResult = _clientCompanyService.Create(new ClientCompany { ClientCompanyName = "ZZTEST", TicketSysCompanyCode = "124", VerificationEmail = "abc@xyz.com", VerificationCode = "123456" });
+                //    _jiraUserMgmtService.Create(new JiraUser { UserFbId = "3058942664196267", CompanyId = companyResult.Id, ClientCompanyId = clientCompanyResult.Id, UserNickname = "abc nickname" });
                 //}
+
+                //JObject message = JObject.FromObject(new
+                //{
+                //    recipient = new { id = "3419843058061019" },
+                //    message = new
+                //    {
+                //        attachment = new
+                //        {
+                //            type = "template",
+                //            payload = new
+                //            {
+                //                template_type = "one_time_notif_req",
+                //                title = "Do you want to get notified with [ABC-001] updates?",
+                //                payload = string.Format(FacebookCustomPayload.CASE_GET_NOTIFIED_PAYLOAD, "[ABC-001]")
+                //            }
+                //        }
+                //    }
+                //});
+
+                //_fbApiClientService.PostMessageAsync(tempToken, message);
+
+                JObject message = JObject.FromObject(new
+                {
+                    recipient = new { one_time_notif_token = "6543617655184695474" },
+                    message = new
+                    {
+                        text = "Follow up:\n\n[ABC-001] updated to Completed"
+                    }
+                });
+                _fbApiClientService.PostMessageAsync(tempToken, message);
+
+
+
 
                 return Ok("Seed Complete.");
             }
@@ -71,12 +107,14 @@ namespace TicketBOT.Controllers
         [Route("GetCaseDetail")]
         public IActionResult GetCaseDetail()
         {
-            Company c = new Company() { TicketSysUrl = "http://58.185.112.2:8550",
-             TicketSysId = "developer@sabreinfo.com.sg",
-              TicketSysPassword = "DevS@b3r"
+            Company c = new Company()
+            {
+                TicketSysUrl = "http://58.185.112.2:8550",
+                TicketSysId = "developer@sabreinfo.com.sg",
+                TicketSysPassword = "DevS@b3r"
             };
 
-           return Ok(_caseMgmtService.GetCaseStatusAsync(c, "124", "ZZTST-1").Result);            
+            return Ok(_caseMgmtService.GetCaseStatusAsync(c, "124", "ZZTST-1").Result);
         }
 
         [HttpPost]
@@ -96,8 +134,8 @@ namespace TicketBOT.Controllers
             };
 
             return Ok(_caseMgmtService
-                            .CreateCaseAsync(c, cl, $"Issue in test on {DateTime.Now.ToString("dd MMM yyyy")}", 
-                            "I have an issue in my system. please HELPPPPP!!!").Result) ;
+                            .CreateCaseAsync(c, cl, $"Issue in test on {DateTime.Now.ToString("dd MMM yyyy")}",
+                            "I have an issue in my system. please HELPPPPP!!!").Result);
         }
 
         [HttpPost]
