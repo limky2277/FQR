@@ -571,29 +571,25 @@ namespace TicketBOT.Services.BotServices
 
                     // One time notification integration here
                     // Check user whether already subscribe
-                    var userNotifResult = _userCaseNotifService.Get(caseDetailResult.CaseKey);
-                    if (userNotifResult == null)
+                    if (caseDetailResult.Status != JiraServiceDeskStatus.Declined || caseDetailResult.Status != JiraServiceDeskStatus.Completed)
                     {
-                        if (caseDetailResult.Status != JiraServiceDeskStatus.Declined || caseDetailResult.Status != JiraServiceDeskStatus.Completed)
+                        messageList.Add(JObject.FromObject(new
                         {
-                            messageList.Add(JObject.FromObject(new
+                            recipient = new { id = _senderInfo.senderConversationId },
+                            message = new
                             {
-                                recipient = new { id = _senderInfo.senderConversationId },
-                                message = new
+                                attachment = new
                                 {
-                                    attachment = new
+                                    type = "template",
+                                    payload = new
                                     {
-                                        type = "template",
-                                        payload = new
-                                        {
-                                            template_type = "one_time_notif_req",
-                                            title = $"Do you want to get notified with {caseDetailResult.CaseKey} updates?",
-                                            payload = string.Format(FacebookCustomPayload.CASE_GET_NOTIFIED_PAYLOAD, caseDetailResult.CaseKey)
-                                        }
+                                        template_type = "one_time_notif_req",
+                                        title = $"Do you want to get notified with {caseDetailResult.CaseKey} updates?",
+                                        payload = string.Format(FacebookCustomPayload.CASE_GET_NOTIFIED_PAYLOAD, caseDetailResult.CaseKey)
                                     }
                                 }
-                            }));
-                        }
+                            }
+                        }));
                     }
 
                     _conversationService.RemoveActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}");
