@@ -12,21 +12,26 @@ using TicketBOT.JIRA.Models;
 using TicketBOT.Models.Facebook;
 using TicketBOT.Services.DBServices;
 using TicketBOT.Services.Interfaces;
+using System.Resources;
 using static TicketBOT.Models.Facebook.FacebookQuickReply;
+using TicketBOT.Core.Helpers;
+using Microsoft.Extensions.Localization;
+using TicketBOT.Resources;
 
 namespace TicketBOT.Services.BotServices
 {
     public class BotService
     {
-        private static readonly ILog _logger = LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
-
+        private static readonly ILog _logger = LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);        
         private readonly ICaseMgmtService _caseMgmtService;
         private readonly IFbApiClientService _fbApiClientService;
         private readonly TicketSysUserMgmtService _jiraUserMgmtService;
         private readonly CompanyService _companyService;
         private readonly ClientCompanyService _clientService;
         private readonly UserCaseNotifService _userCaseNotifService;
-
+        private readonly ApplicationSettings _applicationSettings;
+        private readonly IStringLocalizer<SharedResource> _localizer;
+        
         private FacebookSender _senderInfo;
         private Company _company;
 
@@ -35,7 +40,7 @@ namespace TicketBOT.Services.BotServices
         public BotService(ICaseMgmtService caseMgmtService,
             TicketSysUserMgmtService jiraUserMgmtService, IFbApiClientService fbApiClientService,
             CompanyService companyService, ClientCompanyService clientService,
-            IConversationService conversationService, UserCaseNotifService userCaseNotifService)
+            IConversationService conversationService, UserCaseNotifService userCaseNotifService, ApplicationSettings applicationSettings, IStringLocalizer<SharedResource> stringLocalizer)
         {
             _caseMgmtService = caseMgmtService;
             _jiraUserMgmtService = jiraUserMgmtService;
@@ -44,6 +49,8 @@ namespace TicketBOT.Services.BotServices
             _clientService = clientService;
             _conversationService = conversationService;
             _userCaseNotifService = userCaseNotifService;
+            _applicationSettings = applicationSettings;
+            _localizer = stringLocalizer;
         }
 
         public async Task DispatchAgent(Messaging incomingMessage, Company company)
@@ -51,7 +58,7 @@ namespace TicketBOT.Services.BotServices
             try
             {
                 //read user name here. Return null if user not found
-                _senderInfo = await _fbApiClientService.GetUserInfoAsync(company.FbPageToken, incomingMessage.sender.id);
+                _senderInfo = await _fbApiClientService.GetUserInfoAsync(Utility.ParseDInfo(company.FbPageToken, _applicationSettings.General.SysInfo), incomingMessage.sender.id);
                 _senderInfo.senderConversationId = incomingMessage.sender.id;
                 _company = company;
 
@@ -505,7 +512,7 @@ namespace TicketBOT.Services.BotServices
                     messageList.Add(JObject.FromObject(new
                     {
                         recipient = new { id = _senderInfo.senderConversationId },
-                        message = new { text = $"Greeting {_senderInfo.last_name}! We love having you with us." }
+                        message = new { text = string.Format(_localizer["Greeting"], _senderInfo.last_name) }
                     }));
 
                     messageList.Add(JObject.FromObject(new
@@ -712,7 +719,7 @@ namespace TicketBOT.Services.BotServices
 
             foreach (var message in messageList)
             {
-                await _fbApiClientService.PostMessageAsync(_company.FbPageToken, message);
+                await _fbApiClientService.PostMessageAsync(Utility.ParseDInfo(_company.FbPageToken, _applicationSettings.General.SysInfo), message);
             }
             return messageList;
         }

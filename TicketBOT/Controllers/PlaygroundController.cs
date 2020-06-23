@@ -53,7 +53,8 @@ namespace TicketBOT.Controllers
                 // string tempToken = "EAADcf5Tn8Q0BAA6DdKIRm8vQ1TuZCJA93pA893nGyZAabOsyNPJl7psqiEBZBtrrV318UBjecemc2quU3OkMQH8YGV6tR12tvZBMUzWaLuDWoell68ZB5YB0cWuvq0Phh5vFyS6av3vLqZCRR69Bdjhye05Ofs5zaI3sgfasd1Ukfkeg6LPbmuvBKtiGldx7kZD";
                 // Seed Data
                 string pass = Utility.ParseEInfo("DevS@b3r", _appSettings.General.SysInfo);
-                var companyResult = _companyService.Create(new Company { CompanyName = "Sabre", FbPageId = "102327571503111", FbPageToken = "EAADcf5Tn8Q0BAA6DdKIRm8vQ1TuZCJA93pA893nGyZAabOsyNPJl7psqiEBZBtrrV318UBjecemc2quU3OkMQH8YGV6tR12tvZBMUzWaLuDWoell68ZB5YB0cWuvq0Phh5vFyS6av3vLqZCRR69Bdjhye05Ofs5zaI3sgfasd1Ukfkeg6LPbmuvBKtiGldx7kZD", TicketSysUrl = "http://58.185.112.2:8550", TicketSysId = "developer@sabreinfo.com.sg", TicketSysPassword = pass, contactEmail = "support@xyz.com" });
+                string tok = Utility.ParseEInfo("EAADcf5Tn8Q0BAA6DdKIRm8vQ1TuZCJA93pA893nGyZAabOsyNPJl7psqiEBZBtrrV318UBjecemc2quU3OkMQH8YGV6tR12tvZBMUzWaLuDWoell68ZB5YB0cWuvq0Phh5vFyS6av3vLqZCRR69Bdjhye05Ofs5zaI3sgfasd1Ukfkeg6LPbmuvBKtiGldx7kZD", _appSettings.General.SysInfo);
+                var companyResult = _companyService.Create(new Company { CompanyName = "Sabre", FbPageId = "102327571503111", FbPageToken = tok, TicketSysUrl = "http://58.185.112.2:8550", TicketSysId = "developer@sabreinfo.com.sg", TicketSysPassword = pass, contactEmail = "support@xyz.com" });
 
                 //if (companyResult != null)
                 //{
