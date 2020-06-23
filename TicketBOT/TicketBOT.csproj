@@ -33,5 +33,9 @@
     <ProjectReference Include="..\TicketBOT.JIRA\TicketBOT.JIRA.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Resources\" />
+  </ItemGroup>
+
 
 </Project>
