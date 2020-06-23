@@ -3,6 +3,12 @@ using System;
 
 namespace TicketBOT.Core.Models
 {
+    public enum ConvLogType
+    {
+        MuteLog,
+        ChatLog,
+    }
+
     public enum Question
     {
         None, // last action / not involve any question.
@@ -19,6 +25,8 @@ namespace TicketBOT.Core.Models
     {
         None,
         Greeting,
+        RequestOperator,
+        RequestBotAssistance,
         SearchCompany,
         RequestVerificationCode,
         CreateTicket,
@@ -40,6 +48,7 @@ namespace TicketBOT.Core.Models
         public string SenderPageId { get; set; }
         public string ConversationData { get; set; }
         public DateTime ModifiedOn { get; set; } = DateTime.Now;
+        public int ConversationLogType { get; set; } = (int)ConvLogType.ChatLog;
     }
 
     public class ConversationData

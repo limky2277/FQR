@@ -4,6 +4,8 @@ namespace TicketBOT.Models.Facebook
 {
     public class FacebookQuickReply
     {
+        public const string REQ_BOT_ASSIST = "Chatbot Please!";
+        public const string NO_BOT_ASSIST = "I'm fine :)";
         public const string RAISE_TICKET = "Raise a Ticket";
         public const string TICKET_STATUS = "Check Ticket Status";
         public const string JUST_BROWSE = "Just browsing";

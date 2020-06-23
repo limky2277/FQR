@@ -49,7 +49,7 @@ namespace TicketBOT.Controllers
         {
             try
             {
-                string tempToken = "EAADcf5Tn8Q0BAA6DdKIRm8vQ1TuZCJA93pA893nGyZAabOsyNPJl7psqiEBZBtrrV318UBjecemc2quU3OkMQH8YGV6tR12tvZBMUzWaLuDWoell68ZB5YB0cWuvq0Phh5vFyS6av3vLqZCRR69Bdjhye05Ofs5zaI3sgfasd1Ukfkeg6LPbmuvBKtiGldx7kZD";
+                // string tempToken = "EAADcf5Tn8Q0BAA6DdKIRm8vQ1TuZCJA93pA893nGyZAabOsyNPJl7psqiEBZBtrrV318UBjecemc2quU3OkMQH8YGV6tR12tvZBMUzWaLuDWoell68ZB5YB0cWuvq0Phh5vFyS6av3vLqZCRR69Bdjhye05Ofs5zaI3sgfasd1Ukfkeg6LPbmuvBKtiGldx7kZD";
                 // Seed Data
                 var companyResult = _companyService.Create(new Company { CompanyName = "TEst", FbPageId = "123", FbPageToken = "12", TicketSysUrl = "http://58.112.2:8550", TicketSysId = "66@66.com.sg", TicketSysPassword = "55@b3r", contactEmail = "66@xyz.com" });
 

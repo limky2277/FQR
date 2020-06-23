@@ -104,7 +104,7 @@ namespace TicketBOT
             // Recurring job to blast notification
             // Call notification endpoint periodically
             // Notification URL & interval are configured in appsettings
-            RecurringJob.AddOrUpdate(() => RestApiHelper.GetAsync(string.Format(notifSett.NotificationApiPath)), $"*/{notifSett.RefreshIntervalMins} * * * *");
+            //RecurringJob.AddOrUpdate(() => RestApiHelper.GetAsync(string.Format(notifSett.NotificationApiPath)), $"*/{notifSett.RefreshIntervalMins} * * * *");
 
             _logger.Info("[TicketBOT] Ticket Bot Service (Started)");
         }

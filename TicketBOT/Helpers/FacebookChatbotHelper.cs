@@ -10,7 +10,7 @@ namespace TicketBOT.Helpers
         {
             var hashString = new StringBuilder();
             string mno = appSetting.FacebookApp.AppSecret;
-            var val = TicketBOT.Core.Helpers.Utility.ParseDInfo(appSetting.General.SysInfo, mno);
+            var val = TicketBOT.Core.Helpers.Utility.ParseDInfo(mno, appSetting.General.SysInfo);
             using (var crypto = new HMACSHA1(Encoding.UTF8.GetBytes(val)))
             {
                 var hash = crypto.ComputeHash(Encoding.UTF8.GetBytes(body));

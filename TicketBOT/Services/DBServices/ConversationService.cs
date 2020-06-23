@@ -23,12 +23,12 @@ namespace TicketBOT.Services.DBServices
             _conversation = database.GetCollection<Conversation>(nameof(Conversation));
         }
 
-        public bool AnyActiveConversation(string senderPageId)
-        {
-            var result = GetByKey(senderPageId);
+        //public bool AnyActiveConversation(string senderPageId, ConvLogType convLogType)
+        //{
+        //    var result = GetByKey(senderPageId);
 
-            return result != null ? true : false;
-        }
+        //    return result != null ? true : false;
+        //}
 
         public ConversationData LastConversation(string senderPageId)
         {
@@ -42,7 +42,7 @@ namespace TicketBOT.Services.DBServices
 
         public void RemoveActiveConversation(string senderPageId)
         {
-            var result = GetByKey(senderPageId);
+            var result = GetActiveConversation(senderPageId);
             _conversation.DeleteOne(x => x.Id == result.Id);
         }
 
@@ -68,7 +68,7 @@ namespace TicketBOT.Services.DBServices
                     }
                 }
 
-                Conversation convUpd = GetByKey(senderPageId);
+                Conversation convUpd = GetActiveConversation(senderPageId);
                 convUpd.ConversationData = JsonConvert.SerializeObject(convList);
                 convUpd.ModifiedOn = DateTime.Now;
 
@@ -92,7 +92,7 @@ namespace TicketBOT.Services.DBServices
 
         public List<ConversationData> GetConversationList(string senderPageId)
         {
-            var result = GetByKey(senderPageId);
+            var result = GetActiveConversation(senderPageId);
             if (result != null)
             {
                 List<ConversationData> convs = JsonConvert.DeserializeObject<List<ConversationData>>(result.ConversationData).ToList();
@@ -101,7 +101,7 @@ namespace TicketBOT.Services.DBServices
             return null;
         }
 
-        private void Update(Guid id, Conversation conversation) =>
+        public void Update(Guid id, Conversation conversation) =>
             _conversation.ReplaceOne(x => x.Id == id, conversation);
 
         public void Create(Conversation conversation)
@@ -111,11 +111,12 @@ namespace TicketBOT.Services.DBServices
             _conversation.InsertOne(conversation);
         }
 
-        private Conversation GetByKey(string senderPageId)
+        public Conversation GetActiveConversation(string senderPageId, ConvLogType convLogType = ConvLogType.ChatLog)
         {
             return _conversation.Find(x => x.SenderPageId == senderPageId
                                          && x.ModifiedOn > DateTime.UtcNow.AddMinutes(-_appSettings.ConversationSettings.ExpiryAfterMins)
-                                         && x.ModifiedOn < DateTime.UtcNow)
+                                         && x.ModifiedOn < DateTime.UtcNow
+                                         && x.ConversationLogType == (int)convLogType)
                                          .FirstOrDefault();
 
         }

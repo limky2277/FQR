@@ -24,21 +24,6 @@ namespace TicketBOT.Controllers
         {
             try
             {
-                //loop through subscriptions
-
-                //check jira status <> current status
-
-                //send notification to user 
-
-                //IF only one time then delete entry
-
-
-                //------------ ELSE
-                //ask if user need to continue subscription
-
-                //IF YES, UPDATE subscription entry with new token and status 
-                //IF NO, delete entry
-
                 await _oneTimeNotifService.BlastJiraStatusUpdateNotification();
                 return Ok();
             }
