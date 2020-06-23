@@ -33,7 +33,7 @@ namespace TicketBOT.Services.DBServices
         public Company Create(Company company)
         {
             // Duplicate check
-            var validate = _company.Find(x => x.FbPageId == company.FbPageId && x.FbPageToken == Utility.ParseDInfo(company.FbPageId, _appSettings.General.SysInfo)).ToList();
+            var validate = _company.Find(x => x.FbPageId == company.FbPageId && x.FbPageToken == Utility.ParseDInfo(company.FbPageToken, _appSettings.General.SysInfo)).ToList();
             if (validate.Count == 0)
             {
                 _company.InsertOne(company);
