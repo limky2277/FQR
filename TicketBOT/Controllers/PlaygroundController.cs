@@ -51,7 +51,7 @@ namespace TicketBOT.Controllers
             {
                 string tempToken = "EAADcf5Tn8Q0BAA6DdKIRm8vQ1TuZCJA93pA893nGyZAabOsyNPJl7psqiEBZBtrrV318UBjecemc2quU3OkMQH8YGV6tR12tvZBMUzWaLuDWoell68ZB5YB0cWuvq0Phh5vFyS6av3vLqZCRR69Bdjhye05Ofs5zaI3sgfasd1Ukfkeg6LPbmuvBKtiGldx7kZD";
                 // Seed Data
-                //var companyResult = _companyService.Create(new Company { CompanyName = "Sabre", FbPageId = "102327571503111", FbPageToken = "EAADcf5Tn8Q0BAA6DdKIRm8vQ1TuZCJA93pA893nGyZAabOsyNPJl7psqiEBZBtrrV318UBjecemc2quU3OkMQH8YGV6tR12tvZBMUzWaLuDWoell68ZB5YB0cWuvq0Phh5vFyS6av3vLqZCRR69Bdjhye05Ofs5zaI3sgfasd1Ukfkeg6LPbmuvBKtiGldx7kZD", TicketSysUrl = "http://58.185.112.2:8550", TicketSysId = "developer@sabreinfo.com.sg", TicketSysPassword = "DevS@b3r", contactEmail = "support@xyz.com" });
+                var companyResult = _companyService.Create(new Company { CompanyName = "TEst", FbPageId = "123", FbPageToken = "12", TicketSysUrl = "http://58.112.2:8550", TicketSysId = "66@66.com.sg", TicketSysPassword = "55@b3r", contactEmail = "66@xyz.com" });
 
                 //if (companyResult != null)
                 //{
@@ -79,15 +79,15 @@ namespace TicketBOT.Controllers
 
                 //_fbApiClientService.PostMessageAsync(tempToken, message);
 
-                JObject message = JObject.FromObject(new
-                {
-                    recipient = new { one_time_notif_token = "6543617655184695474" },
-                    message = new
-                    {
-                        text = "Follow up:\n\n[ABC-001] updated to Completed"
-                    }
-                });
-                _fbApiClientService.PostMessageAsync(tempToken, message);
+                //JObject message = JObject.FromObject(new
+                //{
+                //    recipient = new { one_time_notif_token = "6543617655184695474" },
+                //    message = new
+                //    {
+                //        text = "Follow up:\n\n[ABC-001] updated to Completed"
+                //    }
+                //});
+                //_fbApiClientService.PostMessageAsync(tempToken, message);
 
 
 

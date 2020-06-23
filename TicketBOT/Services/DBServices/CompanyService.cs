@@ -15,7 +15,7 @@ namespace TicketBOT.Services.DBServices
         public CompanyService(ApplicationSettings appSettings)
         {
             _appSettings = appSettings;
-            var client = new MongoClient(DBHelper.getInfo(appSettings));
+            var client = DBHelper.getCient(appSettings);
             var database = client.GetDatabase(_appSettings.TicketBOTDb.DatabaseName);
 
             _company = database.GetCollection<Company>(nameof(Company));
