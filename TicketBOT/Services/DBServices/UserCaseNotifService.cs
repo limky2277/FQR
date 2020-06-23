@@ -25,17 +25,25 @@ namespace TicketBOT.Services.DBServices
         public TicketSysNotification Create(TicketSysNotification ticketSysNotification)
         {
             // Duplicate check
-            var validate = _notif.Find(x => x.JiraCaseKey == ticketSysNotification.JiraCaseKey && x.OneTimeNotifToken == ticketSysNotification.OneTimeNotifToken).ToList();
-            if (validate.Count == 0)
+            var validate = _notif.Find(x => x.JiraCaseKey == ticketSysNotification.JiraCaseKey && x.OneTimeNotifToken == ticketSysNotification.OneTimeNotifToken).FirstOrDefault();
+            if (validate == null)
             {
                 _notif.InsertOne(ticketSysNotification);
                 return ticketSysNotification;
+            }
+            else
+            {
+                // If already exist, update one time notif token 
+                validate.OneTimeNotifToken = ticketSysNotification.OneTimeNotifToken;
+                validate.ModifiedOn = DateTime.Now;
+
+                Update(validate.Id, validate);
             }
             return null;
         }
 
         public List<TicketSysNotification> Get() =>
-            _notif.Find(x => true).ToList();
+            _notif.Find(x => x.Active == true).ToList();
 
         public TicketSysNotification Get(string caseKey) =>
             _notif.Find(x => x.JiraCaseKey == caseKey).FirstOrDefault();

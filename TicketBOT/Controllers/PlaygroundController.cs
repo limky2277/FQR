@@ -90,6 +90,12 @@ namespace TicketBOT.Controllers
                 //_fbApiClientService.PostMessageAsync(tempToken, message);
 
 
+                //var errMsg = JObject.FromObject(new
+                //{
+                //    recipient = new { one_time_notif_token = "7915953949996185142" },
+                //    message = new { text = $"Test Repeating Blast" }
+                //});
+                //await _fbApiClientService.PostMessageAsync("EAADcf5Tn8Q0BAA6DdKIRm8vQ1TuZCJA93pA893nGyZAabOsyNPJl7psqiEBZBtrrV318UBjecemc2quU3OkMQH8YGV6tR12tvZBMUzWaLuDWoell68ZB5YB0cWuvq0Phh5vFyS6av3vLqZCRR69Bdjhye05Ofs5zaI3sgfasd1Ukfkeg6LPbmuvBKtiGldx7kZD", errMsg);
 
 
                 return Ok("Seed Complete.");
