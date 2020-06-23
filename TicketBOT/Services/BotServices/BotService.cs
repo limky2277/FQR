@@ -1,4 +1,5 @@
 ﻿using log4net;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -57,8 +58,20 @@ namespace TicketBOT.Services.BotServices
                 // INIT.1.0 Consider Redis before proceed A.1.0
                 // INIT.1.1 Check any active conversation (Past x mins) To break the conversation loop
 
+                // Check whether user temporarily mute Bot service
+                var mutedConvLog = _conversationService.GetActiveConversation($"{_senderInfo.senderConversationId}~{company.FbPageId}", ConvLogType.MuteLog);
+                if (mutedConvLog != null)
+                {
+                    // Extend TTL (Time-To-Live)
+                    mutedConvLog.ModifiedOn = DateTime.Now;
+                    _conversationService.Update(mutedConvLog.Id, mutedConvLog);
+
+                    // No need reply anything
+                    return;
+                }
+
                 // If no active conversation, send greeting
-                if (!_conversationService.AnyActiveConversation($"{_senderInfo.senderConversationId}~{company.FbPageId}"))
+                if (_conversationService.GetActiveConversation($"{_senderInfo.senderConversationId}~{company.FbPageId}") == null)
                 {
                     // A.1.0
                     // Send greeting first
@@ -106,7 +119,7 @@ namespace TicketBOT.Services.BotServices
                                         break;
                                     case RETRY_YES:
                                         _conversationService.RemoveActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}");
-                                        await ConstructAndSendMessage(ConstructType.Greeting);
+                                        await ConstructAndSendMessage(ConstructType.RequestBotAssistance);
                                         break;
                                     case RETRY_NO:
                                         await ConstructAndSendMessage(ConstructType.Ending);
@@ -123,9 +136,15 @@ namespace TicketBOT.Services.BotServices
                                     case CANCEL_NOTIF:
                                         await UserUnsubscribeNotification();
                                         break;
+                                    case REQ_BOT_ASSIST:
+                                        await ConstructAndSendMessage(ConstructType.RequestBotAssistance);
+                                        break;
+                                    case NO_BOT_ASSIST:
+                                        await ConstructAndSendMessage(ConstructType.RequestOperator);
+                                        break;
                                     default:
                                         // prompt: Apologize due to not recognize selected option. Send relevant / available option again
-                                        await ConstructAndSendMessage(ConstructType.NotImplemented);
+                                        // await ConstructAndSendMessage(ConstructType.NotImplemented);
                                         break;
                                 }
                             }
@@ -139,6 +158,7 @@ namespace TicketBOT.Services.BotServices
                     {
                         await ConstructAndSendMessage(ConstructType.Greeting);
                     }
+
                 }
             }
             catch (Exception ex)
@@ -208,8 +228,8 @@ namespace TicketBOT.Services.BotServices
         private async Task PrepareCheckTicketStatus()
         {
             // Jira integration
-            bool ticketStatus = true;
-            if (ticketStatus)
+            var user = _jiraUserMgmtService.GetUser(_senderInfo.id, _company.Id);
+            if (user != null)
             {
                 await ConstructAndSendMessage(ConstructType.CheckTicket);
             }
@@ -220,7 +240,7 @@ namespace TicketBOT.Services.BotServices
 
                 // Reset to greeting
                 // await ConstructAndSendMessage(ConstructType.Greeting)
-                await ConstructAndSendMessage(ConstructType.NotImplemented);
+                await ConstructAndSendMessage(ConstructType.SearchCompany);
             }
         }
 
@@ -478,6 +498,29 @@ namespace TicketBOT.Services.BotServices
                 case ConstructType.Greeting:
                     var greetingOption = new List<QuickReplyOption>
                     {
+                        new QuickReplyOption { title = REQ_BOT_ASSIST, payload = REQ_BOT_ASSIST },
+                        new QuickReplyOption { title = NO_BOT_ASSIST, payload = NO_BOT_ASSIST },
+                    };
+
+                    messageList.Add(JObject.FromObject(new
+                    {
+                        recipient = new { id = _senderInfo.senderConversationId },
+                        message = new { text = $"Greeting {_senderInfo.last_name}! We love having you with us." }
+                    }));
+
+                    messageList.Add(JObject.FromObject(new
+                    {
+                        recipient = new { id = _senderInfo.senderConversationId },
+                        message = new { text = $"Can you tell me what you're looking for? Here some option(s).", quick_replies = greetingOption }
+                    }));
+
+                    _conversationService.UpsertActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}", new ConversationData { LastQuestionAsked = (int)Question.None, Answered = true });
+
+
+                    break;
+                case ConstructType.RequestBotAssistance:
+                    var assistanceOptions = new List<QuickReplyOption>
+                    {
                         new QuickReplyOption { title = RAISE_TICKET, payload = RAISE_TICKET },
                         new QuickReplyOption { title = TICKET_STATUS, payload = TICKET_STATUS },
                         new QuickReplyOption { title = CANCEL_NOTIF, payload = CANCEL_NOTIF },
@@ -487,16 +530,34 @@ namespace TicketBOT.Services.BotServices
                     messageList.Add(JObject.FromObject(new
                     {
                         recipient = new { id = _senderInfo.senderConversationId },
-                        message = new { text = $"Greeting {_senderInfo.last_name}! I'm TicketBOT! We love having you with us." }
+                        message = new { text = $"Greeting {_senderInfo.last_name}! I'm TicketBOT!" }
                     }));
 
                     messageList.Add(JObject.FromObject(new
                     {
                         recipient = new { id = _senderInfo.senderConversationId },
-                        message = new { text = $"How can I help you? Here some option(s).", quick_replies = greetingOption }
+                        message = new { text = $"How can I help you? Here some option(s).", quick_replies = assistanceOptions }
                     }));
 
                     _conversationService.UpsertActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}", new ConversationData { LastQuestionAsked = (int)Question.None, Answered = true });
+                    break;
+                case ConstructType.RequestOperator:
+                    messageList.Add(JObject.FromObject(new
+                    {
+                        recipient = new { id = _senderInfo.senderConversationId },
+                        message = new { text = $"Okay! Let me get someone for you." }
+                    }));
+
+                    Conversation conversation = new Conversation 
+                    {
+                        SenderPageId = $"{_senderInfo.senderConversationId}~{_company.FbPageId}",
+                        ConversationLogType = (int)ConvLogType.MuteLog,
+                        ConversationData = JsonConvert.SerializeObject(new List<ConversationData> { new ConversationData { LastQuestionAsked = (int)Question.None, Answered = true } }),
+                    };
+
+                    _conversationService.RemoveActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}");
+
+                    _conversationService.Create(conversation);
                     break;
                 case ConstructType.Ending:
                     messageList.Add(JObject.FromObject(new

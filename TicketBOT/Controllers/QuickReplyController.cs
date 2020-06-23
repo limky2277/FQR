@@ -51,7 +51,7 @@ namespace TicketBOT.Controllers
             try
             {
                 string xyz = _appSettings.FacebookApp.CallbackVefifyToken;
-                var val = TicketBOT.Core.Helpers.Utility.ParseDInfo(_appSettings.General.SysInfo, xyz);
+                var val = TicketBOT.Core.Helpers.Utility.ParseDInfo(xyz, _appSettings.General.SysInfo);
                 if (Request.Query["hub.verify_token"] == val)
                 {
                     return Ok(Request.Query["hub.challenge"].ToString());
