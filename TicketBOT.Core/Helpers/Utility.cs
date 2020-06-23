@@ -46,25 +46,32 @@ namespace TicketBOT.Core.Helpers
         /// <exception cref="FormatException"></exception>
         public static string ParseDInfo(string text, string info)
         {
-            if (text == null)
+            try
             {
-                return null;
-            }
+                if (text == null)
+                {
+                    return null;
+                }
 
-            if (info == null)
+                if (info == null)
+                {
+                    info = String.Empty;
+                }
+
+                // Get the bytes of the string
+                var bytesToBeDecrypted = Convert.FromBase64String(text);
+                var passwordBytes = Encoding.UTF7.GetBytes(info);
+
+                passwordBytes = SHA256.Create().ComputeHash(passwordBytes);
+
+                var bytesDecrypted = GetDInfo(bytesToBeDecrypted, passwordBytes);
+
+                return Encoding.UTF7.GetString(bytesDecrypted);
+            }
+            catch (Exception)
             {
-                info = String.Empty;
+                return "";
             }
-
-            // Get the bytes of the string
-            var bytesToBeDecrypted = Convert.FromBase64String(text);
-            var passwordBytes = Encoding.UTF7.GetBytes(info);
-
-            passwordBytes = SHA256.Create().ComputeHash(passwordBytes);
-
-            var bytesDecrypted = GetDInfo(bytesToBeDecrypted, passwordBytes);
-
-            return Encoding.UTF7.GetString(bytesDecrypted);
         }
 
         private static byte[] GetEInfo(byte[] bytesToBeEncrypted, byte[] passwordBytes)
