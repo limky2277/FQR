@@ -16,7 +16,7 @@ namespace TicketBOT.Services.DBServices
         public UserCaseNotifService(ApplicationSettings appSettings)
         {
             _appSettings = appSettings;
-            var client = new MongoClient(DBHelper.getInfo(appSettings));
+            var client = DBHelper.getCient(appSettings);
             var database = client.GetDatabase(_appSettings.TicketBOTDb.DatabaseName);
 
             _notif = database.GetCollection<TicketSysNotification>(nameof(TicketSysNotification));

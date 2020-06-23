@@ -4,11 +4,13 @@ using log4net;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Hosting.Server.Features;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using System;
+using System.Globalization;
 using TicketBOT.Core.Helpers;
 using TicketBOT.Core.Models;
 using TicketBOT.Core.Services.Interfaces;
@@ -68,6 +70,28 @@ namespace TicketBOT
             });
 
             services.AddHangfire(c => c.UseMemoryStorage());
+            services.AddLocalization();
+            services.Configure<RequestLocalizationOptions>(options =>
+            {
+                var supportedCultures = new[]
+                {
+                new CultureInfo("en-SG")
+                //,new CultureInfo("en-GB")
+                //,new CultureInfo("de-DE"
+            };
+                options.DefaultRequestCulture = new RequestCulture("en-SG", "en-SG");
+
+                // You must explicitly state which cultures your application supports.
+                // These are the cultures the app supports for formatting 
+                // numbers, dates, etc.
+
+                options.SupportedCultures = supportedCultures;
+
+                // These are the cultures the app supports for UI strings, 
+                // i.e. we have localized resources for.
+
+                options.SupportedUICultures = supportedCultures;
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -104,7 +128,7 @@ namespace TicketBOT
             // Recurring job to blast notification
             // Call notification endpoint periodically
             // Notification URL & interval are configured in appsettings
-            RecurringJob.AddOrUpdate(() => RestApiHelper.GetAsync(string.Format(notifSett.NotificationApiPath)), $"*/{notifSett.RefreshIntervalMins} * * * *");
+            //RecurringJob.AddOrUpdate(() => RestApiHelper.GetAsync(string.Format(notifSett.NotificationApiPath)), $"*/{notifSett.RefreshIntervalMins} * * * *");
 
             _logger.Info("[TicketBOT] Ticket Bot Service (Started)");
         }

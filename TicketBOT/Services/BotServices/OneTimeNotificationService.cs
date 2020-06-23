@@ -3,6 +3,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using TicketBOT.Core.Helpers;
 using TicketBOT.Core.Models;
 using TicketBOT.Core.Services.Interfaces;
 using TicketBOT.Helpers;
@@ -25,10 +26,11 @@ namespace TicketBOT.Services.BotServices
         private readonly CompanyService _companyService;
         private readonly ICaseMgmtService _jiraCaseMgmtService;
         private readonly ClientCompanyService _clientCompanyService;
+        private readonly ApplicationSettings _applicationSettings;
 
         public OneTimeNotificationService(TicketSysUserMgmtService jiraUserMgmtService, UserCaseNotifService userCaseNotifService,
             IFbApiClientService fbApiClientService, CompanyService companyService, ICaseMgmtService jiraCaseMgmtService,
-            ClientCompanyService clientCompanyService)
+            ClientCompanyService clientCompanyService, ApplicationSettings applicationSettings)
         {
             _jiraUserMgmtService = jiraUserMgmtService;
             _userCaseNotifService = userCaseNotifService;
@@ -36,6 +38,7 @@ namespace TicketBOT.Services.BotServices
             _companyService = companyService;
             _jiraCaseMgmtService = jiraCaseMgmtService;
             _clientCompanyService = clientCompanyService;
+            _applicationSettings = applicationSettings;
         }
 
         public async Task UserOptinCaseNoification(Messaging message, Company company)
@@ -85,7 +88,7 @@ namespace TicketBOT.Services.BotServices
 
                 foreach (var msg in messageList)
                 {
-                    await _fbApiClientService.PostMessageAsync(_company.FbPageToken, msg);
+                    await _fbApiClientService.PostMessageAsync(Utility.ParseDInfo(_company.FbPageToken, _applicationSettings.General.SysInfo), msg);
                 }
             }
             catch (Exception ex)
@@ -95,7 +98,7 @@ namespace TicketBOT.Services.BotServices
                     recipient = new { id = message.sender.id },
                     message = new { text = $"DEBUG --> Error. Check exception" }
                 });
-                await _fbApiClientService.PostMessageAsync(_company.FbPageToken, errMsg);
+                await _fbApiClientService.PostMessageAsync(Utility.ParseDInfo(_company.FbPageToken, _applicationSettings.General.SysInfo), errMsg);
                 LoggingHelper.LogError(ex, _logger);
             }
         }
@@ -161,7 +164,7 @@ namespace TicketBOT.Services.BotServices
 
                     foreach (var msg in messageList)
                     {
-                        await _fbApiClientService.PostMessageAsync(company.FbPageToken, msg);
+                        await _fbApiClientService.PostMessageAsync(Utility.ParseDInfo(_company.FbPageToken, _applicationSettings.General.SysInfo), msg);
                     }
                 }
             }

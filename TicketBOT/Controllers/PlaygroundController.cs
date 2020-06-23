@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
 using System;
+using TicketBOT.Core.Helpers;
 using TicketBOT.Core.Models;
 using TicketBOT.Core.Services.Interfaces;
 using TicketBOT.Helpers;
@@ -49,9 +50,11 @@ namespace TicketBOT.Controllers
         {
             try
             {
-                string tempToken = "EAADcf5Tn8Q0BAA6DdKIRm8vQ1TuZCJA93pA893nGyZAabOsyNPJl7psqiEBZBtrrV318UBjecemc2quU3OkMQH8YGV6tR12tvZBMUzWaLuDWoell68ZB5YB0cWuvq0Phh5vFyS6av3vLqZCRR69Bdjhye05Ofs5zaI3sgfasd1Ukfkeg6LPbmuvBKtiGldx7kZD";
+                // string tempToken = "EAADcf5Tn8Q0BAA6DdKIRm8vQ1TuZCJA93pA893nGyZAabOsyNPJl7psqiEBZBtrrV318UBjecemc2quU3OkMQH8YGV6tR12tvZBMUzWaLuDWoell68ZB5YB0cWuvq0Phh5vFyS6av3vLqZCRR69Bdjhye05Ofs5zaI3sgfasd1Ukfkeg6LPbmuvBKtiGldx7kZD";
                 // Seed Data
-                //var companyResult = _companyService.Create(new Company { CompanyName = "Sabre", FbPageId = "102327571503111", FbPageToken = "EAADcf5Tn8Q0BAA6DdKIRm8vQ1TuZCJA93pA893nGyZAabOsyNPJl7psqiEBZBtrrV318UBjecemc2quU3OkMQH8YGV6tR12tvZBMUzWaLuDWoell68ZB5YB0cWuvq0Phh5vFyS6av3vLqZCRR69Bdjhye05Ofs5zaI3sgfasd1Ukfkeg6LPbmuvBKtiGldx7kZD", TicketSysUrl = "http://58.185.112.2:8550", TicketSysId = "developer@sabreinfo.com.sg", TicketSysPassword = "DevS@b3r", contactEmail = "support@xyz.com" });
+                string pass = Utility.ParseEInfo("DevS@b3r", _appSettings.General.SysInfo);
+                string tok = Utility.ParseEInfo("EAADcf5Tn8Q0BAA6DdKIRm8vQ1TuZCJA93pA893nGyZAabOsyNPJl7psqiEBZBtrrV318UBjecemc2quU3OkMQH8YGV6tR12tvZBMUzWaLuDWoell68ZB5YB0cWuvq0Phh5vFyS6av3vLqZCRR69Bdjhye05Ofs5zaI3sgfasd1Ukfkeg6LPbmuvBKtiGldx7kZD", _appSettings.General.SysInfo);
+                var companyResult = _companyService.Create(new Company { CompanyName = "Sabre", FbPageId = "102327571503111", FbPageToken = tok, TicketSysUrl = "http://58.185.112.2:8550", TicketSysId = "developer@sabreinfo.com.sg", TicketSysPassword = pass, contactEmail = "support@xyz.com" });
 
                 //if (companyResult != null)
                 //{
@@ -89,6 +92,7 @@ namespace TicketBOT.Controllers
                 //});
                 //_fbApiClientService.PostMessageAsync(tempToken, message);
 
+
                 //var errMsg = JObject.FromObject(new
                 //{
                 //    recipient = new { one_time_notif_token = "7915953949996185142" },
@@ -114,8 +118,8 @@ namespace TicketBOT.Controllers
             {
                 TicketSysUrl = "http://58.185.112.2:8550",
                 TicketSysId = "developer@sabreinfo.com.sg",
-                TicketSysPassword = "DevS@b3r"
-            };
+                TicketSysPassword = Utility.ParseEInfo("DevS@b3r", _appSettings.General.SysInfo)
+        };
 
             return Ok(_caseMgmtService.GetCaseStatusAsync(c, "124", "ZZTST-1").Result);
         }
@@ -128,7 +132,7 @@ namespace TicketBOT.Controllers
             {
                 TicketSysUrl = "http://58.185.112.2:8550",
                 TicketSysId = "developer@sabreinfo.com.sg",
-                TicketSysPassword = "DevS@b3r"
+                TicketSysPassword = Utility.ParseEInfo("DevS@b3r", _appSettings.General.SysInfo)
             };
 
             ClientCompany cl = new ClientCompany()
@@ -149,7 +153,7 @@ namespace TicketBOT.Controllers
             {
                 TicketSysUrl = "http://58.185.112.2:8550",
                 TicketSysId = "developer@sabreinfo.com.sg",
-                TicketSysPassword = "DevS@b3r"
+                TicketSysPassword = Utility.ParseEInfo("DevS@b3r", _appSettings.General.SysInfo)
             };
 
             return Ok(_caseMgmtService.GetClientCompanies(c, clientCompanyName).Result);

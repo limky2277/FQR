@@ -43,7 +43,7 @@ namespace TicketBOT.JIRA.Services
                 if (string.IsNullOrWhiteSpace(CaseSubject))
                     throw new ArgumentException($"Please enter correct Case subject", "CaseSubject");
 
-                var JIRAReq = getJIRARequestObj(company.TicketSysId, company.TicketSysPassword);
+                var JIRAReq = getJIRARequestObj(company.TicketSysId, Utility.ParseDInfo(company.TicketSysPassword, _appSettings.General.SysInfo));
                 JIRAReq.Method = HttpMethod.Post;
                 JIRAReq.RequestUri = new Uri(string.Format(_appSettings.JIRAApiEndpoint.CreateCase, company.TicketSysUrl));
                 var caseDt = new ServiceDeskRequest()
@@ -114,7 +114,7 @@ namespace TicketBOT.JIRA.Services
                 if (string.IsNullOrWhiteSpace(CaseId))
                     throw new ArgumentException($"Please enter correct CaseId", "CaseId");
 
-                var JIRAReq = getJIRARequestObj(company.TicketSysId, company.TicketSysPassword);
+                var JIRAReq = getJIRARequestObj(company.TicketSysId, Utility.ParseDInfo(company.TicketSysPassword, _appSettings.General.SysInfo));
                 JIRAReq.Method = HttpMethod.Get;
                 JIRAReq.RequestUri = new Uri(string.Format(_appSettings.JIRAApiEndpoint.GetStatus, company.TicketSysUrl, CaseId));
 
@@ -203,7 +203,7 @@ namespace TicketBOT.JIRA.Services
                 while (true)
                 {
                     //New req need to create else client throws error [The request message was already sent.]
-                    var JIRAReq = getJIRARequestObj(company.TicketSysId, company.TicketSysPassword);
+                    var JIRAReq = getJIRARequestObj(company.TicketSysId, Utility.ParseDInfo(company.TicketSysPassword, _appSettings.General.SysInfo));
                     JIRAReq.Method = HttpMethod.Get;
                     JIRAReq.RequestUri = new Uri(string.Format(_appSettings.JIRAApiEndpoint.GetServiceDesk, company.TicketSysUrl, start, limit));
                     resp = await RestApiHelper.SendAsync(JIRAReq);

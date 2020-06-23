@@ -15,7 +15,7 @@ namespace TicketBOT.Services.DBServices
         public CompanyService(ApplicationSettings appSettings)
         {
             _appSettings = appSettings;
-            var client = new MongoClient(DBHelper.getInfo(appSettings));
+            var client = DBHelper.getCient(appSettings);
             var database = client.GetDatabase(_appSettings.TicketBOTDb.DatabaseName);
 
             _company = database.GetCollection<Company>(nameof(Company));
@@ -33,7 +33,7 @@ namespace TicketBOT.Services.DBServices
         public Company Create(Company company)
         {
             // Duplicate check
-            var validate = _company.Find(x => x.FbPageId == company.FbPageId && x.FbPageToken == company.FbPageToken).ToList();
+            var validate = _company.Find(x => x.FbPageId == company.FbPageId && x.FbPageToken == Utility.ParseDInfo(company.FbPageId, _appSettings.General.SysInfo)).ToList();
             if (validate.Count == 0)
             {
                 _company.InsertOne(company);

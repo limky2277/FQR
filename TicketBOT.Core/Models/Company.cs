@@ -1,10 +1,13 @@
 ﻿using MongoDB.Bson.Serialization.Attributes;
 using System;
+using TicketBOT.Core.Helpers;
 
 namespace TicketBOT.Core.Models
 {
     public class Company
     {
+        
+
         [BsonId]
         //[BsonRepresentation(BsonType.ObjectId)]
         public Guid Id { get; set; } = Guid.NewGuid();
@@ -12,7 +15,7 @@ namespace TicketBOT.Core.Models
         public string FbPageId { get; set; }
         public string FbPageToken { get; set; }
         public string TicketSysUrl { get; set; }
-        public string TicketSysId { get; set; }
+        public string TicketSysId { get; set; }        
         public string TicketSysPassword { get; set; }
         public DateTime CreatedOn { get; set; } = DateTime.Now;
         public string contactEmail { get; set; }
