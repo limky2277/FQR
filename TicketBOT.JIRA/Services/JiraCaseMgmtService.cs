@@ -195,8 +195,7 @@ namespace TicketBOT.JIRA.Services
                 int start = 0;
                 int limit = 100;
 
-                //used for OTP
-                Random generator = new Random();                
+                             
 
                 //Looks like jira doesnt have an option to find the service desk using name. So we have to loop through all service desk and find matching names
                 //This loop will find all matching records and breaks once it search through all companies.
@@ -224,9 +223,8 @@ namespace TicketBOT.JIRA.Services
                                                             new ClientCompany()
                                                             {
                                                                 ClientCompanyName = srvDsk.projectName,
-                                                                TicketSysCompanyCode = srvDsk.id,
-                                                                VerificationCode = "2376",//generator.Next(0, 9999).ToString("D4"),
-                                                                Active = false, //ONLY IF THEY ENTER CORRECT OTP, WE activate
+                                                                TicketSysCompanyCode = srvDsk.id,                                                                
+                                                                Active = true,
                                                                 CreatedOn = DateTime.Now,
                                                                 VerificationEmail = company.contactEmail //currently using conpanys contact. user should call and get OTP from company
                                                             }                 

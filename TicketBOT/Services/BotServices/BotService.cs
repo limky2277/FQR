@@ -28,7 +28,7 @@ namespace TicketBOT.Services.BotServices
         private readonly TicketSysUserMgmtService _jiraUserMgmtService;
         private readonly CompanyService _companyService;
         private readonly ClientCompanyService _clientService;
-        private readonly UserCaseNotifService _userCaseNotifService;
+        private readonly ITicketSysNotificationService _tickSysNotifService;
         private readonly ApplicationSettings _applicationSettings;
         private readonly IStringLocalizer<SharedResource> _localizer;
         
@@ -40,7 +40,8 @@ namespace TicketBOT.Services.BotServices
         public BotService(ICaseMgmtService caseMgmtService,
             TicketSysUserMgmtService jiraUserMgmtService, IFbApiClientService fbApiClientService,
             CompanyService companyService, ClientCompanyService clientService,
-            IConversationService conversationService, UserCaseNotifService userCaseNotifService, ApplicationSettings applicationSettings, IStringLocalizer<SharedResource> stringLocalizer)
+            IConversationService conversationService, ITicketSysNotificationService tickSysNotifService, ApplicationSettings applicationSettings,
+            IStringLocalizer<SharedResource> stringLocalizer)
         {
             _caseMgmtService = caseMgmtService;
             _jiraUserMgmtService = jiraUserMgmtService;
@@ -48,7 +49,7 @@ namespace TicketBOT.Services.BotServices
             _companyService = companyService;
             _clientService = clientService;
             _conversationService = conversationService;
-            _userCaseNotifService = userCaseNotifService;
+            _tickSysNotifService = tickSysNotifService;
             _applicationSettings = applicationSettings;
             _localizer = stringLocalizer;
         }
@@ -76,6 +77,8 @@ namespace TicketBOT.Services.BotServices
                     // No need reply anything
                     return;
                 }
+
+                //TODO: Email all muted conversation to the company email.
 
                 // If no active conversation, send greeting
                 if (_conversationService.GetActiveConversation($"{_senderInfo.senderConversationId}~{company.FbPageId}") == null)
@@ -135,7 +138,14 @@ namespace TicketBOT.Services.BotServices
                                         await CreateJiraTicket();
                                         break;
                                     case CASE_SUBMIT_NO:
-                                        await ConstructAndSendMessage(ConstructType.Ending);
+                                        var reply = JObject.FromObject(new
+                                        {
+
+                                            recipient = new { id = _senderInfo.senderConversationId },
+                                            message = new { text = $"Alright, No worries 👍🏽" }
+                                        });
+
+                                        await ConstructAndSendMessage(ConstructType.Ending, additionalMessage: reply);
                                         break;
                                     case JUST_BROWSE:
                                         await ConstructAndSendMessage(ConstructType.Ending);
@@ -256,11 +266,11 @@ namespace TicketBOT.Services.BotServices
             // Clear all notification queue in db
             var jiraUser = _jiraUserMgmtService.Get(_senderInfo.senderConversationId);
 
-            List<TicketSysNotification> notifList = _userCaseNotifService.Get();
+            List<TicketSysNotification> notifList = _tickSysNotifService.Get();
             notifList = notifList.Where(x => x.TicketSysUserId == jiraUser.Id).ToList();
             foreach (var notif in notifList)
             {
-                _userCaseNotifService.Remove(notif);
+                _tickSysNotifService.Remove(notif);
             }
 
             var notifUnsubSuccess = JObject.FromObject(new
@@ -296,8 +306,20 @@ namespace TicketBOT.Services.BotServices
 
                             if (clientResult.ClientCompanyName.ToLower().Equals(answer.ToLower()))
                             {
+                                
                                 // Insert into TicketSysUser and Active = false
                                 var createdClientCompany = _clientService.Create(clientResult);
+
+                                //generate OTP and send to ticketsys user company's email
+                                Random generator = new Random();
+                                var verificationCode = generator.Next(0, 9999).ToString("D4");
+                                // Add user
+                                TicketSysUser user = new TicketSysUser { UserFbId = _senderInfo.id, 
+                                                                         ClientCompanyId = clientResult.Id,
+                                                                         CompanyId = _company.Id, UserNickname = $"{_senderInfo.last_name} {_senderInfo.first_name}", Active = false, VerificationCode = verificationCode};
+
+                                _jiraUserMgmtService.Create(user);
+
 
                                 conversation.Answered = true;
                                 conversation.AnswerFreeText = createdClientCompany.Id.ToString();
@@ -305,7 +327,11 @@ namespace TicketBOT.Services.BotServices
                                 _conversationService.UpsertActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}", conversation);
 
                                 // Ask for verification code
-                                await ConstructAndSendMessage(ConstructType.RequestVerificationCode);
+                                var testOTP = string.Empty;
+                                if (answer == "ZZTEST")
+                                    testOTP = verificationCode;
+
+                                await ConstructAndSendMessage(ConstructType.RequestVerificationCode, messageInfo: testOTP);
                                 break;
                             }
                         }
@@ -315,7 +341,7 @@ namespace TicketBOT.Services.BotServices
                         var comNotFoundMsg = JObject.FromObject(new
                         {
                             recipient = new { id = _senderInfo.senderConversationId },
-                            message = new { text = $"I'm sorry, we can't find your company in our system. Please enter the correct name or you may also contact {_company.contactEmail} for the company name." }
+                            message = new { text = $"I'm sorry :( , we can't find your company in our system. Please enter the correct name or you may also contact {_company.contactEmail} for the company name." }
                         });
 
                         // Invalid input / no company found, please try again
@@ -341,22 +367,17 @@ namespace TicketBOT.Services.BotServices
                             ConversationData verifyConv = qaConv.Where(x => x.LastQuestionAsked == (int)Question.CompanyName).FirstOrDefault();
 
                             // Check verification code
-                            var clientList = _clientService.Get();
-                            var clientResult = clientList.Where(x => x.Id == Guid.Parse(verifyConv.AnswerFreeText) && x.VerificationCode == answer).FirstOrDefault();
+                            var TicketSysUser = _jiraUserMgmtService.Get(_senderInfo.id);
 
-                            if (clientResult != null)
+                            if (TicketSysUser.VerificationCode == answer)
                             {
                                 // Check & Update ClientCompany to true
-                                if (!clientResult.Active)
+                                if (!TicketSysUser.Active)
                                 {
-                                    clientResult.Active = true;
-                                    _clientService.Update(clientResult.Id, clientResult);
+                                    TicketSysUser.Active = true;
+                                    _jiraUserMgmtService.Update(TicketSysUser.Id, TicketSysUser);
                                 }
 
-                                // Register user
-                                TicketSysUser user = new TicketSysUser { UserFbId = _senderInfo.id, ClientCompanyId = clientResult.Id, CompanyId = _company.Id, UserNickname = $"{_senderInfo.last_name} {_senderInfo.first_name}" };
-
-                                _jiraUserMgmtService.Create(user);
 
                                 // Begin create ticket
                                 await ConstructAndSendMessage(ConstructType.CreateTicket);
@@ -367,8 +388,14 @@ namespace TicketBOT.Services.BotServices
                                 conversation.CreatedOn = DateTime.Now;
                                 _conversationService.UpsertActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}", conversation);
 
+                                var jObj = JObject.FromObject(new
+                                {
+                                    recipient = new { id = _senderInfo.senderConversationId },
+                                    message = new { text = $"Sorry, I didn't quite catch that. It seems like invalid option/answer." }
+                                });
+
                                 // Invalid input / no company found, please try again
-                                await ConstructAndSendMessage(ConstructType.Retry);
+                                await ConstructAndSendMessage(ConstructType.Retry, additionalMessage: jObj);
                             }
                         }
                         else
@@ -421,7 +448,7 @@ namespace TicketBOT.Services.BotServices
                         string jiraDescription = conversationList.FirstOrDefault(x => x.LastQuestionAsked == (int)Question.IssueDescription).AnswerFreeText;
 
                         // Show case summary & ask for creation confirmation
-                        await ConstructAndSendMessage(ConstructType.TicketCreationConfirmation, new CaseDetail { Subject = jiraSummary, Detail = jiraDescription });
+                        await ConstructAndSendMessage(ConstructType.TicketCreationConfirmation, new CaseDetail { Subject = $"Issue in {jiraSummary}", Detail = jiraDescription });
                     }
                     else
                     {
@@ -464,9 +491,14 @@ namespace TicketBOT.Services.BotServices
                         {
                             conversation.CreatedOn = DateTime.Now;
                             _conversationService.UpsertActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}", conversation);
-
+                            
+                            var reply = JObject.FromObject(new
+                            {
+                                recipient = new { id = _senderInfo.senderConversationId },
+                                message = new { text = $"Looks like you have entered a wrong ticket code 😟" }
+                            });
                             // Invalid input / no company found, please try again
-                            await ConstructAndSendMessage(ConstructType.Retry);
+                            await ConstructAndSendMessage(ConstructType.Retry, additionalMessage:reply);
                         }
                     }
                     else
@@ -491,7 +523,7 @@ namespace TicketBOT.Services.BotServices
         /// <param name="text">text</param>
         /// <param name="sender">sender id</param>
         /// <returns>json</returns>
-        private async Task<List<JObject>> ConstructAndSendMessage(ConstructType type, CaseDetail caseDetailResult = null, JObject additionalMessage = null)
+        private async Task<List<JObject>> ConstructAndSendMessage(ConstructType type, CaseDetail caseDetailResult = null, JObject additionalMessage = null, string messageInfo = null)
         {
             // To-do: consider to convert to JSON 
             List<JObject> messageList = new List<JObject>();
@@ -512,13 +544,13 @@ namespace TicketBOT.Services.BotServices
                     messageList.Add(JObject.FromObject(new
                     {
                         recipient = new { id = _senderInfo.senderConversationId },
-                        message = new { text = string.Format(_localizer["Greeting"], _senderInfo.last_name) }
+                        message = new { text = $"👋 Greeting { _senderInfo.first_name} { _senderInfo.last_name} 👋! {Environment.NewLine}We love having you with us."  }
                     }));
 
                     messageList.Add(JObject.FromObject(new
                     {
                         recipient = new { id = _senderInfo.senderConversationId },
-                        message = new { text = $"Can you tell me what you're looking for? Here some option(s).", quick_replies = greetingOption }
+                        message = new { text = $"Should I help you to work with your suppot cases? Here are some option(s). 🕵", quick_replies = greetingOption }
                     }));
 
                     _conversationService.UpsertActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}", new ConversationData { LastQuestionAsked = (int)Question.None, Answered = true });
@@ -529,21 +561,27 @@ namespace TicketBOT.Services.BotServices
                     var assistanceOptions = new List<QuickReplyOption>
                     {
                         new QuickReplyOption { title = RAISE_TICKET, payload = RAISE_TICKET },
-                        new QuickReplyOption { title = TICKET_STATUS, payload = TICKET_STATUS },
-                        new QuickReplyOption { title = CANCEL_NOTIF, payload = CANCEL_NOTIF },
-                        new QuickReplyOption { title = JUST_BROWSE, payload = JUST_BROWSE },
+                        new QuickReplyOption { title = TICKET_STATUS, payload = TICKET_STATUS }                        
+                        //new QuickReplyOption { title = JUST_BROWSE, payload = JUST_BROWSE },
                     };
+
+                    //check any notification pending, if yes user can cancel it too..
+                    var result = _jiraUserMgmtService.GetUser(_senderInfo.senderConversationId, _company.Id);                    
+                    if (result != null && _tickSysNotifService.GetByUser(result.Id) != null)
+                    {
+                        assistanceOptions.Add(new QuickReplyOption { title = CANCEL_NOTIF, payload = CANCEL_NOTIF });
+                    }
 
                     messageList.Add(JObject.FromObject(new
                     {
                         recipient = new { id = _senderInfo.senderConversationId },
-                        message = new { text = $"Greeting {_senderInfo.last_name}! I'm TicketBOT!" }
+                        message = new { text = $"Greeting {_senderInfo.first_name} {_senderInfo.last_name}! I'm TicketBOT! 🤓" }
                     }));
 
                     messageList.Add(JObject.FromObject(new
                     {
                         recipient = new { id = _senderInfo.senderConversationId },
-                        message = new { text = $"How can I help you? Here some option(s).", quick_replies = assistanceOptions }
+                        message = new { text = $"👨🏻‍🔧 How can I help you? Here are some option(s).", quick_replies = assistanceOptions }
                     }));
 
                     _conversationService.UpsertActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}", new ConversationData { LastQuestionAsked = (int)Question.None, Answered = true });
@@ -552,7 +590,7 @@ namespace TicketBOT.Services.BotServices
                     messageList.Add(JObject.FromObject(new
                     {
                         recipient = new { id = _senderInfo.senderConversationId },
-                        message = new { text = $"Okay! Let me get someone for you." }
+                        message = new { text = $"Okay! Please submit your details here, our team will check and get back to you. " }
                     }));
 
                     Conversation conversation = new Conversation 
@@ -610,11 +648,25 @@ namespace TicketBOT.Services.BotServices
                         recipient = new { id = _senderInfo.senderConversationId },
                         message = new { text = $"All done! Your case has been logged. Please quote {caseDetailResult.CaseKey} to follow up." }
                     }));
+
                     messageList.Add(JObject.FromObject(new
                     {
                         recipient = new { id = _senderInfo.senderConversationId },
-                        message = new { text = $"Thank you for using TicketBOT! Have a nice day! :)." }
+                        message = new
+                        {
+                            attachment = new
+                            {
+                                type = "template",
+                                payload = new
+                                {
+                                    template_type = "one_time_notif_req",
+                                    title = $"Do you want to get notified with {caseDetailResult.CaseKey} update?",
+                                    payload = string.Format(FacebookCustomPayload.CASE_GET_NOTIFIED_PAYLOAD, caseDetailResult.CaseKey)
+                                }
+                            }
+                        }
                     }));
+
                     _conversationService.RemoveActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}");
                     break;
                 case ConstructType.CheckTicket:
@@ -666,15 +718,19 @@ namespace TicketBOT.Services.BotServices
                     messageList.Add(JObject.FromObject(new
                     {
                         recipient = new { id = _senderInfo.senderConversationId },
-                        message = new { text = $"Before we get started, I wanna know one thing. Can you tell me your company name please?" }
+                        message = new { text = $"☝🏻 Before we get started, I wanna know one thing. Can you tell me your company name please? \nAs our cilent's privacy matters, we need you to enter full company name. \n😬 For testing enter 'ZZTEST' 😬" }
                     }));
                     _conversationService.UpsertActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}", new ConversationData { LastQuestionAsked = (int)Question.CompanyName, Answered = false });
                     break;
                 case ConstructType.RequestVerificationCode:
+                    string testOTPInfo = string.Empty;
+                    if (!string.IsNullOrWhiteSpace(messageInfo))
+                        testOTPInfo = $"\n😬 For testing you can enter verification code as {messageInfo} 😬";
+                    
                     messageList.Add(JObject.FromObject(new
                     {
                         recipient = new { id = _senderInfo.senderConversationId },
-                        message = new { text = $"Okay great! We've sent you a verification email which contains a verification code. Can you tell me your verification code please?" }
+                        message = new { text = $"Okay great! We've sent you a verification email which contains a verification code. Can you tell me your verification code please?{testOTPInfo}" }
                     }));
                     _conversationService.UpsertActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}", new ConversationData { LastQuestionAsked = (int)Question.VerificationCode, Answered = false });
                     break;
@@ -685,11 +741,11 @@ namespace TicketBOT.Services.BotServices
                         new QuickReplyOption { title = RETRY_NO, payload = RETRY_NO },
                     };
 
-                    messageList.Add(JObject.FromObject(new
-                    {
-                        recipient = new { id = _senderInfo.senderConversationId },
-                        message = new { text = $"Sorry, I didn't quite catch that. It seems like invalid option/answer." }
-                    }));
+                    //messageList.Add(JObject.FromObject(new
+                    //{
+                    //    recipient = new { id = _senderInfo.senderConversationId },
+                    //    message = new { text = $"Sorry, I didn't quite catch that. It seems like invalid option/answer." }
+                    //}));
                     messageList.Add(JObject.FromObject(new
                     {
                         recipient = new { id = _senderInfo.senderConversationId },
@@ -701,7 +757,7 @@ namespace TicketBOT.Services.BotServices
                     messageList.Add(JObject.FromObject(new
                     {
                         recipient = new { id = _senderInfo.senderConversationId },
-                        message = new { text = $"DEBUG --> Not implemented." }
+                        message = new { text = $"Im still learning, you can submit ideas {_company.contactEmail}. 💡" }
                     }));
                     _conversationService.RemoveActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}");
                     break;
@@ -709,7 +765,7 @@ namespace TicketBOT.Services.BotServices
                     messageList.Add(JObject.FromObject(new
                     {
                         recipient = new { id = _senderInfo.senderConversationId },
-                        message = new { text = $"DEBUG --> Error. Check exception" }
+                        message = new { text = $"Something went wrong, please try again :(" }
                     }));
                     _conversationService.RemoveActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}");
                     break;

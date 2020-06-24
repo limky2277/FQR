@@ -8,7 +8,7 @@ using TicketBOT.Services.Interfaces;
 
 namespace TicketBOT.Services.DBServices
 {
-    public class UserCaseNotifService : IGenericService<TicketSysNotification>
+    public class UserCaseNotifService : ITicketSysNotificationService
     {
         private readonly ApplicationSettings _appSettings;
         private readonly IMongoCollection<TicketSysNotification> _notif;
@@ -47,6 +47,10 @@ namespace TicketBOT.Services.DBServices
 
         public TicketSysNotification Get(string caseKey) =>
             _notif.Find(x => x.JiraCaseKey == caseKey).FirstOrDefault();
+
+        public TicketSysNotification GetByUser(Guid userID) =>
+            _notif.Find(x => x.TicketSysUserId == userID).FirstOrDefault();
+
 
         public TicketSysNotification GetById(Guid id) =>
             _notif.Find(x => x.Id == id).FirstOrDefault();

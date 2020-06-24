@@ -56,5 +56,6 @@ namespace TicketBOT.Services.DBServices
 
         public TicketSysUser GetUser(string userFbId, Guid companyId) =>
            _user.Find(x => x.UserFbId == userFbId && x.CompanyId == companyId && x.Active == true).FirstOrDefault();
+
     }
 }

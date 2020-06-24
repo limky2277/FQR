@@ -21,14 +21,14 @@ namespace TicketBOT.Services.BotServices
 
         private readonly IFbApiClientService _fbApiClientService;
         private readonly TicketSysUserMgmtService _jiraUserMgmtService;
-        private readonly UserCaseNotifService _userCaseNotifService;
+        private readonly ITicketSysNotificationService _userCaseNotifService;
         private Company _company;
         private readonly CompanyService _companyService;
         private readonly ICaseMgmtService _jiraCaseMgmtService;
         private readonly ClientCompanyService _clientCompanyService;
         private readonly ApplicationSettings _applicationSettings;
 
-        public OneTimeNotificationService(TicketSysUserMgmtService jiraUserMgmtService, UserCaseNotifService userCaseNotifService,
+        public OneTimeNotificationService(TicketSysUserMgmtService jiraUserMgmtService, ITicketSysNotificationService userCaseNotifService,
             IFbApiClientService fbApiClientService, CompanyService companyService, ICaseMgmtService jiraCaseMgmtService,
             ClientCompanyService clientCompanyService, ApplicationSettings applicationSettings)
         {
@@ -78,7 +78,7 @@ namespace TicketBOT.Services.BotServices
                 messageList.Add(JObject.FromObject(new
                 {
                     recipient = new { id = message.sender.id },
-                    message = new { text = $"All set! We'll send you a notification when there is an update!" }
+                    message = new { text = $"All set! We'll send you a notification when there is an update! 👍" }
                 }));
                 messageList.Add(JObject.FromObject(new
                 {
@@ -113,12 +113,12 @@ namespace TicketBOT.Services.BotServices
                 {
                     var ticketUser = _jiraUserMgmtService.GetById(pending.TicketSysUserId);
                     var ticketUserCompany = _clientCompanyService.GetById(ticketUser.ClientCompanyId);
-                    var company = _companyService.GetById(ticketUser.CompanyId);
+                    _company = _companyService.GetById(ticketUser.CompanyId);
 
                     CaseDetail caseDetail = null;
                     try
                     {
-                        caseDetail = await _jiraCaseMgmtService.GetCaseStatusAsync(company, ticketUserCompany.TicketSysCompanyCode, pending.JiraCaseKey);
+                        caseDetail = await _jiraCaseMgmtService.GetCaseStatusAsync(_company, ticketUserCompany.TicketSysCompanyCode, pending.JiraCaseKey);
                     }
                     catch { }
 

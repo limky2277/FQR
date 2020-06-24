@@ -13,6 +13,7 @@ namespace TicketBOT.Core.Models
         public Guid CompanyId { get; set; }
         public string UserNickname { get; set; }
         public DateTime CreatedOn { get; set; } = DateTime.Now;
+        public string VerificationCode { get; set; }
         public bool Active { get; set; } = true;
     }
 }

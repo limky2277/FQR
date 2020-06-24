@@ -4,15 +4,15 @@ namespace TicketBOT.Models.Facebook
 {
     public class FacebookQuickReply
     {
-        public const string REQ_BOT_ASSIST = "Chatbot Please!";
-        public const string NO_BOT_ASSIST = "I'm fine :)";
+        public const string REQ_BOT_ASSIST = "Yes!";
+        public const string NO_BOT_ASSIST = "General Enquiry";
         public const string RAISE_TICKET = "Raise a Ticket";
         public const string TICKET_STATUS = "Check Ticket Status";
         public const string JUST_BROWSE = "Just browsing";
         public const string RETRY_YES = "Yes please!";
-        public const string RETRY_NO = "No, thank you.";
-        public const string CASE_SUBMIT_YES = "Submit now.";
-        public const string CASE_SUBMIT_NO = "Cancel submission.";
+        public const string RETRY_NO = "No, thank you";
+        public const string CASE_SUBMIT_YES = "Submit now";
+        public const string CASE_SUBMIT_NO = "Cancel submission";
         public const string CANCEL_NOTIF = "Cancel Notification";
 
         public class QuickReplyOption
@@ -35,7 +35,7 @@ namespace TicketBOT.Models.Facebook
             string payload = null;
             try
             {
-                payload = incomingMessage.message.quick_reply.payload;
+                payload = incomingMessage.message.quick_reply?.payload;
             }
             catch { }
 

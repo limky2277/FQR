@@ -11,6 +11,7 @@ namespace TicketBOT.Core.Helpers
     public static class DBHelper
     {
         //private const string LocalMasterKey = "Mng0NCt41N3YkQ5aXRRMkhGRkxNkVyNURNR6ZHVUYUJCaNmdWMDFBMUGdQV09wOGVNYUMxT2k3XVyZG9jZKelhaQmRCZGJkT1QURhZ2h2UzR2d2RrZzh0cFBwM3uSjFk";
+        private static MongoClient client = null;
 
         public static MongoClient getCient(TicketBOT.Core.Models.ApplicationSettings sett)
         {
@@ -26,18 +27,22 @@ namespace TicketBOT.Core.Helpers
             //var keyVaultNamespace = CollectionNamespace.FromFullName("admin.datakeys");
             //var autoEncryptionOptions = new AutoEncryptionOptions(keyVaultNamespace, kmsProviders);
 
-
-            string mnb = sett.General.SysInfo;
-            string cn = string.Format(sett.TicketBOTDb.ConnectionString, Utility.ParseDInfo(sett.TicketBOTDb.DBPass, mnb));
-            var url = MongoUrl.Create(cn);
-
-            var mongoClientSettings = new MongoClientSettings
+            if (client == null)
             {
-                //AutoEncryptionOptions = autoEncryptionOptions,
-                Server = url.Server,
-                Credential = url.GetCredential()
-            };
-            var client = new MongoClient(mongoClientSettings);
+
+                string mnb = sett.General.SysInfo;
+                string cn = string.Format(sett.TicketBOTDb.ConnectionString, Utility.ParseDInfo(sett.TicketBOTDb.DBPass, mnb));
+                
+                //var url = MongoUrl.Create(cn);
+                //var mongoClientSettings = new MongoClientSettings
+                //{
+                //    AutoEncryptionOptions = autoEncryptionOptions,
+                //    Server = url.Server,
+                //    Credential = url.GetCredential()
+                //};
+                //client = new MongoClient(mongoClientSettings);
+                client = new MongoClient(cn);
+            }
 
             return client;
         }

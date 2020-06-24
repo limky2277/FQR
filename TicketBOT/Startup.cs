@@ -48,7 +48,7 @@ namespace TicketBOT
             services.AddScoped<OneTimeNotificationService>();
             //services.AddScoped<ISenderCacheService, SenderCacheService>();
             services.AddScoped<IConversationService, ConversationService>();
-            services.AddScoped<UserCaseNotifService>();
+            services.AddScoped<ITicketSysNotificationService, UserCaseNotifService>();
 
             // Register AppSettings
             applicationSettings = new ApplicationSettings();
@@ -128,7 +128,7 @@ namespace TicketBOT
             // Recurring job to blast notification
             // Call notification endpoint periodically
             // Notification URL & interval are configured in appsettings
-            //RecurringJob.AddOrUpdate(() => RestApiHelper.GetAsync(string.Format(notifSett.NotificationApiPath)), $"*/{notifSett.RefreshIntervalMins} * * * *");
+            RecurringJob.AddOrUpdate(() => RestApiHelper.GetAsync(string.Format(notifSett.NotificationApiPath)), $"*/{notifSett.RefreshIntervalMins} * * * *");
 
             _logger.Info("[TicketBOT] Ticket Bot Service (Started)");
         }
