@@ -83,7 +83,7 @@ namespace TicketBOT.Services.BotServices
                 messageList.Add(JObject.FromObject(new
                 {
                     recipient = new { id = message.sender.id },
-                    message = new { text = $"Thank you for using TicketBOT! Have a nice day! :)." }
+                    message = new { text = $"Thank you for using TicketBOT! Have a nice day! :)" }
                 }));
 
                 foreach (var msg in messageList)

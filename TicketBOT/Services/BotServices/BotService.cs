@@ -307,7 +307,7 @@ namespace TicketBOT.Services.BotServices
                             if (clientResult.ClientCompanyName.ToLower().Equals(answer.ToLower()))
                             {
                                 
-                                // Insert into TicketSysUser and Active = false
+                                // Check client company exist, if yes update, else insert.                                
                                 var createdClientCompany = _clientService.Create(clientResult);
 
                                 //generate OTP and send to ticketsys user company's email
@@ -328,7 +328,7 @@ namespace TicketBOT.Services.BotServices
 
                                 // Ask for verification code
                                 var testOTP = string.Empty;
-                                if (answer == "ZZTEST")
+                                if (answer == "ZTEST COMPANY")
                                     testOTP = verificationCode;
 
                                 await ConstructAndSendMessage(ConstructType.RequestVerificationCode, messageInfo: testOTP);
@@ -608,7 +608,7 @@ namespace TicketBOT.Services.BotServices
                     messageList.Add(JObject.FromObject(new
                     {
                         recipient = new { id = _senderInfo.senderConversationId },
-                        message = new { text = $"Thank you! Have a nice day! :)." }
+                        message = new { text = $"Thank you! Have a nice day! :)" }
                     }));
 
                     _conversationService.RemoveActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}");
@@ -617,7 +617,7 @@ namespace TicketBOT.Services.BotServices
                     messageList.Add(JObject.FromObject(new
                     {
                         recipient = new { id = _senderInfo.senderConversationId },
-                        message = new { text = $"Okay got it! Which application you encounter an issue?" }
+                        message = new { text = $"Okay got it!\nIn which application do you encounter the issue?" }
                     }));
                     _conversationService.UpsertActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}", new ConversationData { LastQuestionAsked = (int)Question.IssueApplicationName, Answered = false });
                     break;
@@ -686,7 +686,7 @@ namespace TicketBOT.Services.BotServices
                     messageList.Add(JObject.FromObject(new
                     {
                         recipient = new { id = _senderInfo.senderConversationId },
-                        message = new { text = $"Thank you for using TicketBOT! Have a nice day! :)." }
+                        message = new { text = $"Thank you for using TicketBOT! Have a nice day! :)" }
                     }));
 
                     // One time notification integration here
@@ -718,7 +718,7 @@ namespace TicketBOT.Services.BotServices
                     messageList.Add(JObject.FromObject(new
                     {
                         recipient = new { id = _senderInfo.senderConversationId },
-                        message = new { text = $"☝🏻 Before we get started, I wanna know one thing. Can you tell me your company name please? \nAs our cilent's privacy matters, we need you to enter full company name. \n😬 For testing enter 'ZZTEST' 😬" }
+                        message = new { text = $"☝🏻 Before we get started, I wanna know one thing. Can you tell me your company name please? \nAs our cilent's privacy matters, we need you to enter full company name. \n😬 For testing enter 'ZTEST COMPANY' 😬" }
                     }));
                     _conversationService.UpsertActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}", new ConversationData { LastQuestionAsked = (int)Question.CompanyName, Answered = false });
                     break;
@@ -757,7 +757,7 @@ namespace TicketBOT.Services.BotServices
                     messageList.Add(JObject.FromObject(new
                     {
                         recipient = new { id = _senderInfo.senderConversationId },
-                        message = new { text = $"Im still learning, you can submit ideas {_company.contactEmail}. 💡" }
+                        message = new { text = $"Im still learning, you can submit ideas to {_company.contactEmail}. 💡" }
                     }));
                     _conversationService.RemoveActiveConversation($"{_senderInfo.senderConversationId}~{_company.FbPageId}");
                     break;
