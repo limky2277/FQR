@@ -5,10 +5,14 @@ namespace TicketBOT.Core.Models
 {
     public class TicketSysNotification
     {
+        public TicketSysNotification()
+        {
+            Id = Guid.NewGuid().ToString();
+        }
         [BsonId]
         //[BsonRepresentation(BsonType.ObjectId)]
-        public Guid Id { get; set; } = Guid.NewGuid();
-        public Guid TicketSysUserId { get; set; }
+        public string Id { get; set; } 
+        public string TicketSysUserId { get; set; }
         public string OneTimeNotifToken { get; set; }
         public string JiraCaseKey { get; set; }
         public string JiraCaseStatus { get; set; }

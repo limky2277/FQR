@@ -12,6 +12,6 @@ namespace TicketBOT.Services.Interfaces
         void RemoveActiveConversation(string senderPageId);
         List<ConversationData> GetConversationList(string senderPageId);
         void Create(Conversation conversation);
-        void Update(Guid id, Conversation conversation);
+        void Update(string id, Conversation conversation);
     }
 }

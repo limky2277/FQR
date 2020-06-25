@@ -6,6 +6,6 @@ namespace TicketBOT.Services.Interfaces
 {
     public interface IUserMgmtService
     {
-        TicketSysUser GetUser(string userFbId, Guid companyId);
+        TicketSysUser GetUser(string userFbId, string companyId);
     }
 }

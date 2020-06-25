@@ -48,20 +48,20 @@ namespace TicketBOT.Services.DBServices
         public TicketSysNotification Get(string caseKey) =>
             _notif.Find(x => x.JiraCaseKey == caseKey).FirstOrDefault();
 
-        public TicketSysNotification GetByUser(Guid userID) =>
+        public TicketSysNotification GetByUser(string userID) =>
             _notif.Find(x => x.TicketSysUserId == userID).FirstOrDefault();
 
 
-        public TicketSysNotification GetById(Guid id) =>
+        public TicketSysNotification GetById(string id) =>
             _notif.Find(x => x.Id == id).FirstOrDefault();
 
-        public void Update(Guid id, TicketSysNotification ticketSysNotification) =>
+        public void Update(string id, TicketSysNotification ticketSysNotification) =>
           _notif.ReplaceOne(x => x.Id == id, ticketSysNotification);
 
         public void Remove(TicketSysNotification ticketSysNotification) =>
             _notif.DeleteOne(x => x.Id == ticketSysNotification.Id);
 
-        public void Remove(Guid id) =>
+        public void Remove(string id) =>
             _notif.DeleteOne(x => x.Id == id);
     }
 }

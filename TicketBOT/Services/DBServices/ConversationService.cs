@@ -101,7 +101,7 @@ namespace TicketBOT.Services.DBServices
             return null;
         }
 
-        public void Update(Guid id, Conversation conversation) =>
+        public void Update(string id, Conversation conversation) =>
             _conversation.ReplaceOne(x => x.Id == id, conversation);
 
         public void Create(Conversation conversation)

@@ -7,12 +7,12 @@ namespace TicketBOT.Core.Models
     {
         public ClientCompany()
         {
-            Id =  Guid.NewGuid();
+            Id = Guid.NewGuid().ToString();
         }
 
         [BsonId]
         //[BsonRepresentation(BsonType.ObjectId)]
-        public Guid Id { get; set; }
+        public string Id { get; set; }
         public string ClientCompanyName { get; set; }
         public string TicketSysCompanyCode { get; set; }
         public string VerificationEmail { get; set; }        

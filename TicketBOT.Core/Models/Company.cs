@@ -6,11 +6,14 @@ namespace TicketBOT.Core.Models
 {
     public class Company
     {
-        
+        public Company()
+        {
+            Id = Guid.NewGuid().ToString();                
+        }
 
         [BsonId]
         //[BsonRepresentation(BsonType.ObjectId)]
-        public Guid Id { get; set; } = Guid.NewGuid();
+        public string Id { get; set; } 
         public string CompanyName { get; set; }
         public string FbPageId { get; set; }
         public string FbPageToken { get; set; }

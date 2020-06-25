@@ -8,6 +8,6 @@ namespace TicketBOT.Services.Interfaces
 {
     public interface ITicketSysNotificationService : IGenericService<TicketSysNotification>
     {
-        TicketSysNotification GetByUser(Guid id); 
+        TicketSysNotification GetByUser(string id); 
     }
 }

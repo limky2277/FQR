@@ -6,11 +6,11 @@ namespace TicketBOT.Services.Interfaces
     public interface IGenericService<T>
     {
         List<T> Get();
-        T GetById(Guid id);
+        T GetById(string id);
         T Get(string id);
         T Create(T obj);
-        void Update(Guid id, T obj);
+        void Update(string id, T obj);
         void Remove(T obj);
-        void Remove(Guid id);
+        void Remove(string id);
     }
 }

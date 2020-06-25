@@ -315,7 +315,7 @@ namespace TicketBOT.Services.BotServices
                                 var verificationCode = generator.Next(0, 9999).ToString("D4");
                                 // Add user
                                 TicketSysUser user = new TicketSysUser { UserFbId = _senderInfo.id, 
-                                                                         ClientCompanyId = clientResult.Id,
+                                                                         ClientCompanyId = createdClientCompany.Id,
                                                                          CompanyId = _company.Id, UserNickname = $"{_senderInfo.last_name} {_senderInfo.first_name}", Active = false, VerificationCode = verificationCode};
 
                                 _jiraUserMgmtService.Create(user);

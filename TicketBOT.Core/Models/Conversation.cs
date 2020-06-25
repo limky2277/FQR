@@ -43,8 +43,12 @@ namespace TicketBOT.Core.Models
 
     public class Conversation
     {
+        public Conversation()
+        {
+            Id = Guid.NewGuid().ToString();
+        }
         [BsonId]
-        public Guid Id { get; set; } = Guid.NewGuid();
+        public string Id { get; set; }
         public string SenderPageId { get; set; }
         public string ConversationData { get; set; }
         public DateTime ModifiedOn { get; set; } = DateTime.Now;

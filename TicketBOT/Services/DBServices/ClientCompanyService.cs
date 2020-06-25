@@ -25,7 +25,7 @@ namespace TicketBOT.Services.DBServices
         public List<ClientCompany> Get() =>
             _client.Find(x => true).ToList();
 
-        public ClientCompany GetById(Guid id) =>
+        public ClientCompany GetById(string id) =>
             _client.Find(x => x.Id == id).FirstOrDefault();
 
         public ClientCompany Get(string clientCompanyName) =>
@@ -43,13 +43,13 @@ namespace TicketBOT.Services.DBServices
             return validate.FirstOrDefault();
         }
 
-        public void Update(Guid id, ClientCompany company) =>
+        public void Update(string id, ClientCompany company) =>
             _client.ReplaceOne(x => x.Id == id, company);
 
         public void Remove(ClientCompany company) =>
             _client.DeleteOne(x => x.Id == company.Id);
 
-        public void Remove(Guid id) =>
+        public void Remove(string id) =>
             _client.DeleteOne(x => x.Id == id);
     }
 }

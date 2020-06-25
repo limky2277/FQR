@@ -5,12 +5,17 @@ namespace TicketBOT.Core.Models
 {
     public class TicketSysUser
     {
+        public TicketSysUser()
+        {
+            Id = Guid.NewGuid().ToString();
+        }
+
         [BsonId]
         //[BsonRepresentation(BsonType.ObjectId)]
-        public Guid Id { get; set; } = Guid.NewGuid();
+        public string Id { get; set; } 
         public string UserFbId { get; set; }
-        public Guid ClientCompanyId { get; set; }
-        public Guid CompanyId { get; set; }
+        public string ClientCompanyId { get; set; }
+        public string CompanyId { get; set; }
         public string UserNickname { get; set; }
         public DateTime CreatedOn { get; set; } = DateTime.Now;
         public string VerificationCode { get; set; }

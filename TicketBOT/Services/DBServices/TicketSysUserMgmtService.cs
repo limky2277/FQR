@@ -27,7 +27,7 @@ namespace TicketBOT.Services.DBServices
         public List<TicketSysUser> Get() =>
             _user.Find(x => true).ToList();
 
-        public TicketSysUser GetById(Guid id) =>
+        public TicketSysUser GetById(string id) =>
             _user.Find(x => x.Id == id).FirstOrDefault();
 
         public TicketSysUser Get(string userFbId) =>
@@ -45,16 +45,16 @@ namespace TicketBOT.Services.DBServices
             return null;
         }
 
-        public void Update(Guid id, TicketSysUser user) =>
+        public void Update(string id, TicketSysUser user) =>
            _user.ReplaceOne(x => x.Id == id, user);
 
         public void Remove(TicketSysUser user) =>
             _user.DeleteOne(x => x.Id == user.Id);
 
-        public void Remove(Guid id) =>
+        public void Remove(string id) =>
             _user.DeleteOne(x => x.Id == id);
 
-        public TicketSysUser GetUser(string userFbId, Guid companyId) =>
+        public TicketSysUser GetUser(string userFbId, string companyId) =>
            _user.Find(x => x.UserFbId == userFbId && x.CompanyId == companyId && x.Active == true).FirstOrDefault();
 
     }
